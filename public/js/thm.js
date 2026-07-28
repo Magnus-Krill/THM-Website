@@ -1,162 +1,167 @@
-/* THM shared behaviour · highwaymen.cc */
+/* THM · highwaymen.cc — shared behaviour */
 'use strict';
 
-// ── Theme: apply before first paint (also runs as inline script in <head>) ──
-(function () {
-  const saved = localStorage.getItem('thm-theme');
-  const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  document.documentElement.dataset.theme = saved || preferred;
-})();
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Theme, applied again here for pages loaded without the inline head script.
+document.documentElement.dataset.theme =
+  localStorage.getItem('thm-theme') ||
+  (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
 
 document.addEventListener('DOMContentLoaded', () => {
-
-  // ── Theme toggle ──────────────────────────────────────────────────────────
-  document.querySelectorAll('.theme-toggle').forEach(btn => {
+  // ── Theme switch ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.theme-toggle').forEach((btn) => {
+    const label = () =>
+      btn.setAttribute(
+        'aria-label',
+        `Switch to ${document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'} theme`
+      );
+    label();
     btn.addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
       document.documentElement.dataset.theme = next;
       localStorage.setItem('thm-theme', next);
-      btn.setAttribute('aria-label', `Switch to ${next === 'light' ? 'dark' : 'light'} mode`);
+      label();
     });
   });
 
-  // ── Nav: scroll class + active section indicator ──────────────────────────
+  // ── Menu ─────────────────────────────────────────────────────────────────
+  const burger = document.querySelector('.nav-burger');
+  const menu = document.querySelector('.nav-links');
+  burger?.addEventListener('click', () => {
+    const open = menu.classList.toggle('open');
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+  menu?.addEventListener('click', (e) => {
+    if (!e.target.closest('a')) return;
+    menu.classList.remove('open');
+    burger?.setAttribute('aria-expanded', 'false');
+    burger?.setAttribute('aria-label', 'Open menu');
+  });
+
+  // ── Reveal on scroll ─────────────────────────────────────────────────────
+  const revealObs = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in', 'visible');
+        revealObs.unobserve(e.target);
+      }),
+    { threshold: 0.12 }
+  );
+  document.querySelectorAll('.rv, .reveal').forEach((el) => revealObs.observe(el));
+
+  // ── Log markers fill as their entry comes into view ──────────────────────
+  const seenObs = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('seen');
+          seenObs.unobserve(e.target);
+        }
+      }),
+    { threshold: 0.3 }
+  );
+  document.querySelectorAll('.log-row').forEach((el) => seenObs.observe(el));
+
+  // ── Scroll-driven work ───────────────────────────────────────────────────
+  // One rAF-throttled handler for the nav state and the rail centreline fill.
   const nav = document.querySelector('.nav');
-  let scrollTicking = false;
+  const rail = document.querySelector('.log-rail');
+  let queued = false;
 
-  window.addEventListener('scroll', () => {
-    if (scrollTicking) return;
-    requestAnimationFrame(() => {
-      nav?.classList.toggle('scrolled', window.scrollY > 40);
-      scrollTicking = false;
-    });
-    scrollTicking = true;
-  }, { passive: true });
+  function onScroll() {
+    nav?.classList.toggle('scrolled', scrollY > 24);
 
-  // Active link via IntersectionObserver
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
-  if (sections.length && navLinks.length) {
-    const activeObs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        navLinks.forEach(a => {
-          a.classList.toggle('active', a.getAttribute('href') === `#${e.target.id}`);
+    if (rail && !reduced) {
+      // Fill tracks how far the reading line (60% down the viewport) has
+      // travelled through the log.
+      const r = rail.getBoundingClientRect();
+      const read = innerHeight * 0.6 - r.top;
+      rail.style.setProperty('--fill', Math.min(1, Math.max(0, read / r.height)).toFixed(3));
+    }
+    queued = false;
+  }
+  addEventListener(
+    'scroll',
+    () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(onScroll);
+    },
+    { passive: true }
+  );
+  if (rail && reduced) rail.style.setProperty('--fill', '1');
+  onScroll();
+
+  // ── Active nav link ──────────────────────────────────────────────────────
+  const links = document.querySelectorAll('.nav-links a[href^="#"]');
+  if (links.length) {
+    const activeObs = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          links.forEach((a) => a.classList.toggle('active', a.hash === `#${e.target.id}`));
+        }),
+      { rootMargin: '-30% 0px -55% 0px' }
+    );
+    document.querySelectorAll('section[id]').forEach((s) => activeObs.observe(s));
+  }
+
+  // ── Numbers ──────────────────────────────────────────────────────────────
+  const fmt = new Intl.NumberFormat();
+  const stamp = (iso) => {
+    const d = new Date(iso);
+    return isNaN(d)
+      ? null
+      : d.toLocaleString(undefined, {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
         });
-      });
-    }, { rootMargin: '-35% 0px -50% 0px' });
-    sections.forEach(s => activeObs.observe(s));
+  };
+
+  // Counts up once, so a live reading arrives as a reading rather than a jump.
+  function setCount(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (reduced) {
+      el.textContent = fmt.format(value);
+      return;
+    }
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / 900);
+      el.textContent = fmt.format(Math.round(value * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
-  // ── Hamburger ─────────────────────────────────────────────────────────────
-  const hamburger = document.querySelector('.nav-hamburger');
-  const navMenu = document.querySelector('.nav-links');
-  hamburger?.addEventListener('click', () => {
-    const open = navMenu.classList.toggle('open');
-    hamburger.setAttribute('aria-expanded', String(open));
-    hamburger.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
-  });
-  navMenu?.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      navMenu.classList.remove('open');
-      hamburger?.setAttribute('aria-expanded', 'false');
-      hamburger?.setAttribute('aria-label', 'Open navigation');
-    });
-  });
-
-  // ── Scroll reveal ─────────────────────────────────────────────────────────
-  const revealObs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
-
-  // ── Timeline dot fill ─────────────────────────────────────────────────────
-  const tlObs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
-  }, { threshold: 0.35 });
-  document.querySelectorAll('.tl-item').forEach(el => tlObs.observe(el));
-
-  // ── Member tag stagger ────────────────────────────────────────────────────
-  const memberGrid = document.querySelector('.members-grid');
-  if (memberGrid) {
-    const memberObs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        e.target.querySelectorAll('.member-tag').forEach((tag, i) => {
-          setTimeout(() => tag.classList.add('in'), i * 25);
-        });
-        memberObs.unobserve(e.target);
-      });
-    }, { threshold: 0.05 });
-    memberObs.observe(memberGrid);
+  if (document.getElementById('stat-discord')) {
+    fetch('/api/stats', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        setCount('stat-discord', d.discordMembers);
+        setCount('stat-blocks', d.dailyBlocks);
+        setCount('stat-members', d.noviceMembers);
+        const t = stamp(d.updated);
+        if (t) document.getElementById('stats-updated').textContent = t;
+      })
+      .catch(() => {});
   }
 
-  // ── Glass cursor-reactive specular lighting ───────────────────────────────
-  // Only runs on pointer devices (pointerfine) to avoid mobile battery drain
-  if (window.matchMedia('(pointer: fine)').matches) {
-    document.querySelectorAll('.glass').forEach(el => {
-      el.addEventListener('mousemove', e => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty('--gx', `${e.clientX - r.left}px`);
-        el.style.setProperty('--gy', `${e.clientY - r.top}px`);
-      }, { passive: true });
-      el.addEventListener('mouseleave', () => {
-        el.style.setProperty('--gx', '-400px');
-        el.style.setProperty('--gy', '-400px');
-      }, { passive: true });
-    });
-  }
-
-  // ── Hero grid parallax on scroll ──────────────────────────────────────────
-  const heroGrid = document.querySelector('.hero-grid-inner');
-  if (heroGrid && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    window.addEventListener('scroll', () => {
-      heroGrid.style.transform =
-        `translateX(-50%) rotateX(70deg) translateY(${window.scrollY * 0.28}px)`;
-    }, { passive: true });
-  }
-
-  // ── Map last-updated timestamp ────────────────────────────────────────────
+  // ── Map survey timestamp ─────────────────────────────────────────────────
   const mapEl = document.getElementById('map-updated-time');
   if (mapEl) {
     fetch('/map-meta.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (!data?.updated) return;
-        const d = new Date(data.updated);
-        if (isNaN(d)) return;
-        mapEl.textContent = d.toLocaleString(undefined, {
-          year: 'numeric', month: 'short', day: 'numeric',
-          hour: '2-digit', minute: '2-digit',
-        });
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const t = stamp(d.updated);
+        if (t) mapEl.textContent = t;
       })
       .catch(() => {});
   }
-
-  // ── Live hero stats ───────────────────────────────────────────────────────
-  (function () {
-    function fmtShort(n) {
-      n = Math.round(n);
-      if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-      if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
-      return String(n);
-    }
-    fetch('/api/stats', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        document.getElementById('stat-discord').textContent = fmtShort(data.discordMembers);
-        document.getElementById('stat-blocks').textContent  = fmtShort(data.dailyBlocks);
-        document.getElementById('stat-members').textContent = fmtShort(data.noviceMembers);
-      })
-      .catch(() => {});
-  })();
-
-  // ── Profile page nav scroll (per-page bg tint) ────────────────────────────
-  const profileNav = document.getElementById('profile-nav');
-  if (profileNav) {
-    window.addEventListener('scroll', () => {
-      profileNav.classList.toggle('scrolled', window.scrollY > 40);
-    }, { passive: true });
-  }
-
 });
