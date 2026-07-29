@@ -58,6 +58,9 @@ holds to. In short:
   as you scroll. There is no cross-section drawing — the copy states the width.
 - The map is `.net` (text left, `.map` plate right) and opens full size in the
   `#map-zoom` native `<dialog>`; `thm.js` only wires up open/close.
+- One shell: `.wrap` at 1400px. Only `hr.seam` and `.crew` (the full-bleed crew
+  render at the head of the Roster) sit outside it — put anything full-width
+  outside the `.wrap` div rather than inventing an escape class.
 - Scroll reveal: `.rv` elements get `.in` via `IntersectionObserver`. Profile
   pages use the older `.reveal` / `.visible` pair; `thm.js` handles both.
 - Every animation respects `prefers-reduced-motion`; content is never gated on a

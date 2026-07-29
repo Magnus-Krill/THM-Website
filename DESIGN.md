@@ -88,8 +88,7 @@ spacing:
   s8: "4rem"
   s9: "6rem"
   section:       "clamp(3.5rem, 6.5vw, 5.5rem)"
-  container-max: "1180px"
-  container-wide: "1520px"
+  container-max: "1400px"
   container-pad: "clamp(1.25rem, 4vw, 3rem)"
 components:
   btn-signal:
@@ -219,10 +218,12 @@ Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500
 
 - **Scale** (4px base): `--s2` 8 · `--s3` 12 · `--s4` 16 · `--s5` 24 · `--s6` 32
   · `--s7` 48 · `--s8` 64 · `--s9` 96.
-- **Container**: `.wrap` 1180px, everywhere. Nothing breaks out of it — the map
-  used to sit at 1520px and read as a foreign object dropped on the page.
-- **Section rhythm**: `.band { padding-block: clamp(3.5rem, 6.5vw, 5.5rem) }`;
-  `.band-tight` for the Kitbot strip.
+- **Container**: `.wrap` 1400px. Every grid section reaches the full width;
+  reading measures are capped per component (62ch prose, 64ch log, 46ch reasons),
+  so widening the shell widens layouts and never widens a line of text. Two
+  things sit outside it on purpose: `hr.seam`, which is full-bleed, and `.crew`,
+  which is centred at half the viewport width.
+- **Section rhythm**: `.band { padding-block: clamp(3.5rem, 6.5vw, 5.5rem) }`.
 - **Radius**: `--r-xs` 5px (badges, chips), `--r-sm` 9px (buttons, controls),
   `--r` 14px (panels, plates, frames, map).
 - **Ease**: `--ease: cubic-bezier(0.22, 0.9, 0.24, 1)`.
@@ -277,19 +278,33 @@ stat counters print their final value.
   then a `.facts` table of author and dates. `flex: 1` on the description makes
   both tables land on the same line whatever the copy length. Hover lifts the
   border `--rule` → `--rule-2`; nothing else moves.
+- **`.crew`** — the member-made render of the six high ranks at the head of the
+  Roster: **half width, centred, all four edges feathered** into the page. No
+  hairlines, they would fight the fade. It measures 26–34% of the viewport.
+  - Cropped to `aspect-ratio: 2.8` at `object-position: 50% 68%`. The six figures
+    occupy source rows 1312–3609 of 4340; 3.36 would be the tightest possible
+    crop, and 2.8 deliberately leaves ~230 rows of empty stage above the crown
+    and below the feet for the fade to land in.
+  - Fade stops: **4% on the sides**, 10% top and bottom. Figure 1 starts at 2% of
+    the source width and figure 6 ends at 98%, so a longer side ramp dissolves the
+    end figures — the crowned one included. Never widen it.
+  - Under 760px: full width and no crop (`aspect-ratio: auto`), because at half
+    width the six are unreadable and a taller crop cuts the outer two.
+  - `height: auto` is required — without it the `height` attribute wins and
+    `aspect-ratio` never applies.
 
 ## Page order
 
 1. Hero — eyebrow, wordmark + road, thesis + CTAs, survey plate, `hr.seam`
-2. Clan — mark + facts column | serif prose
+2. Clan — facts column hard left, serif prose hard right, the air between them
 3. Log — six milepost entries against the rail
 4. Network — reading text left, the map in a `.plate` right (`.net`); tap to enlarge
 5. Standard — prose, then six reasons in two columns
 6. Tooling — headline and lede, then Kitbot and the Meteor add-on as two spec sheets
 7. Alliances — the dated register, then The Watchmen as an archived record
-8. Roster — leads, then the named list
+8. Roster — head, the half-width feathered `.crew` render, the four leads, the list
 9. Join — one line and one button
-10. Footer — banner (edge-masked), leads, sign-off
+10. Footer — text only: origin line, leads, source, sign-off
 
 ## Copy
 
