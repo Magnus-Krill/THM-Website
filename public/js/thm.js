@@ -153,6 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(() => {});
   }
 
+  // ── Enlarged map ─────────────────────────────────────────────────────────
+  // ponytail: native <dialog> — Esc, focus trap and the backdrop come free.
+  const zoom = document.getElementById('map-zoom');
+  if (zoom) {
+    const open = document.querySelector('.map-open');
+    if (open) open.addEventListener('click', () => zoom.showModal());
+    zoom.querySelector('.zoom-close').addEventListener('click', () => zoom.close());
+    // Click outside the image closes it, like every other lightbox.
+    zoom.addEventListener('click', (e) => {
+      if (e.target === zoom || e.target.classList.contains('zoom-scroll')) zoom.close();
+    });
+  }
+
   // ── Map survey timestamp ─────────────────────────────────────────────────
   const mapEl = document.getElementById('map-updated-time');
   if (mapEl) {

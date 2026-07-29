@@ -109,8 +109,10 @@ components:
     backgroundColor: "{colors.basalt}"
     borderColor:     "{colors.rule-2}"
     rounded:         "{rounded.default}"
-  lanes:
-    borderColor: "{colors.rule-2}"
+  zoom:
+    backgroundColor: "{colors.basalt}"
+    borderColor:     "{colors.rule-2}"
+    rounded:         "{rounded.default}"
   tool:
     backgroundColor: "{colors.basalt}"
     borderColor:     "{colors.rule}"
@@ -164,7 +166,6 @@ measured line instead:
 |---|---|---|
 | Between sections | `hr.seam` | One full-bleed hairline |
 | Beside the wordmark | `.road` | A 1px line out of "MEN" to `3.75M · border reached`; draws itself on load |
-| Standard section | `.plan` / `.lanes` / `.lane` | Ruled cross-section: six hairlines, five bands, dimension line down the left |
 | Log | `.log-rail` | A 1px rule that fills `--signal` as you read, with a leader line off each date |
 
 ## Colour
@@ -174,7 +175,7 @@ Every text token clears WCAG AA (≥4.5:1) against its own theme's ground.
 | Token | Dark | Light | Use |
 |---|---|---|---|
 | `--void` | `#0d0b0c` | `#f3efe8` | Page ground |
-| `--basalt` | `#151214` | `#e9e3d9` | Raised surface: plate, lanes, tool strip, join band |
+| `--basalt` | `#151214` | `#e9e3d9` | Raised surface: plate, zoom dialog, tool card, join band |
 | `--bone` | `#efe9e3` | `#1a1614` | Primary text |
 | `--ash` | `#a29a95` | `#57504b` | Body copy (7.1 / 6.9) |
 | `--ash-dim` | `#837b77` | `#6f6862` | Mono labels, meta, captions (4.7 / 4.8) |
@@ -251,9 +252,15 @@ stat counters print their final value.
 - **`.plate`** — a labelled panel: a `.plate-head` row of two mono facts over the
   content. Used for the hero telemetry (a 2×2 grid of live numbers that counts up
   once on load), the map figure, and the skin viewer on profiles.
-- **`.map`** — the highway map inside a `.plate`, with the caption as a footer
-  row. Its saturation is pulled to 82% so the imported magenta and cyan sit in
-  the page's palette instead of fighting it.
+- **`.net` / `.map`** — Network is a 0.8fr / 1.2fr split: reading text and a
+  `.facts` table left, the map in a `.plate` right, one column under 900px. The
+  map's saturation is pulled to 82% so the imported magenta and cyan sit in the
+  page's palette instead of fighting it, and it comes back to full on hover.
+- **`.zoom`** — the enlarged map, a native `<dialog>`, so Esc, the focus trap and
+  the backdrop are the platform's job. Width is `min(2800px, 96vw, 131vh)` —
+  131vh is 94vh × the map's 1.4 aspect, so it fits whole on a wide screen. The
+  image holds a `min-width: 900px` floor and pans inside `.zoom-scroll`, so
+  "enlarge" still means something on a phone.
 - **`.facts`** — `<dl>` of clan facts, mono both sides, hairline rows.
 - **`.log`** — date column, rail, body. Mobile collapses the date above the title
   and pulls the rail to the left edge by cancelling `--date-w`.
@@ -265,17 +272,20 @@ stat counters print their final value.
   columns, closed entries dropped to `--ash` with the date in `--signal`.
 - **`.archive`** — a closed record: heading in `--ash` rather than `--bone`, a
   `DISBANDED` plate, a tally row. Past tense, visually.
-- **`.tool`** — a tool strip, capped at 780px so a stack of them reads as a list
-  rather than as full-width cards.
+- **`.tools` / `.tool`** — two spec sheets side by side (one column under 820px).
+  Each is icon + name + kind over a `--rule-2` hairline, then the description,
+  then a `.facts` table of author and dates. `flex: 1` on the description makes
+  both tables land on the same line whatever the copy length. Hover lifts the
+  border `--rule` → `--rule-2`; nothing else moves.
 
 ## Page order
 
 1. Hero — eyebrow, wordmark + road, thesis + CTAs, survey plate, `hr.seam`
 2. Clan — mark + facts column | serif prose
 3. Log — six milepost entries against the rail
-4. Network — the map inside a `.plate` (header, image, caption as one figure)
-5. Standard — prose, ruled cross-section, six reasons in two columns
-6. Tooling — Kitbot and the Meteor add-on, two capped strips
+4. Network — reading text left, the map in a `.plate` right (`.net`); tap to enlarge
+5. Standard — prose, then six reasons in two columns
+6. Tooling — headline and lede, then Kitbot and the Meteor add-on as two spec sheets
 7. Alliances — the dated register, then The Watchmen as an archived record
 8. Roster — leads, then the named list
 9. Join — one line and one button

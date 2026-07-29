@@ -104,6 +104,7 @@ body {
     animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
   }
 }
 
@@ -642,90 +643,94 @@ html[data-theme='light'] .mark { filter: invert(1) saturate(0.9); }
 
 /* ═══ NETWORK — the map ══════════════════════════════════════════════════ */
 /* The map is a foreign object — a bright technical drawing in someone else's
-   palette. It sits inside a .plate so it reads as a documented figure rather
-   than a loose image, and its saturation is pulled back to meet the page. */
+   palette. Reading text beside it rather than under it keeps it to half the
+   column, which is what stops it shouting; the .plate frame makes it a
+   documented figure and the pulled-back saturation lets it meet the page. */
+.net {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+}
+.net-text .head-title { margin-bottom: var(--s4); }
+.net-note {
+  margin-top: var(--s4);
+  color: var(--ash);
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+.net-text .facts { margin-top: var(--s5); }
+
+/* One column from iPad portrait down. */
+@media (max-width: 900px) {
+  .net { grid-template-columns: 1fr; }
+  .net-note, .net-text .lede { max-width: 60ch; }
+}
+
 .map { padding: 0; }
-.map img {
+.map-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+}
+.map-open img {
+  display: block;
   width: 100%;
   height: auto;
   filter: saturate(0.82) brightness(0.96);
+  transition: filter 0.4s var(--ease);
 }
+.map-open:hover img,
+.map-open:focus-visible img { filter: saturate(1) brightness(1); }
 
 .map-caption {
-  padding: var(--s4);
+  padding: 0.75rem var(--s4);
   border-top: 1px solid var(--rule);
   color: var(--ash-dim);
-  font-size: 0.9375rem;
-  max-width: 68ch;
 }
+
+/* Enlarged map — native <dialog>, so Esc and the backdrop come free. The image
+   keeps a 900px floor so "enlarge" still means something on a phone; the
+   container pans instead of shrinking the map to illegibility. */
+.zoom {
+  /* 131vh = 94vh × the map's 1.4 aspect, so on a wide screen the whole map
+     fits without scrolling; on a narrow one 96vw wins and it pans instead. */
+  width: min(2800px, 96vw, 131vh);
+  max-width: none;
+  max-height: 94vh;
+  inset: 0;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r);
+  background: var(--basalt);
+  color: var(--bone);
+  overflow: hidden;
+}
+.zoom::backdrop { background: rgba(0, 0, 0, 0.82); }
+.zoom-scroll { overflow: auto; max-height: 94vh; overscroll-behavior: contain; }
+.zoom-scroll img { display: block; width: 100%; min-width: 900px; height: auto; }
+.zoom-close {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s3);
+  z-index: 1;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r-sm);
+  background: var(--void);
+  color: var(--bone);
+  cursor: pointer;
+}
+.zoom-close:hover { border-color: var(--signal-line); color: var(--signal); }
 
 /* ═══ STANDARD — the spec ═════════════════════════════════════════════════ */
-/* Ruled cross-section: six hairlines, five bands, a dimension line down the
-   left. Measured drawing, no texture. */
-.plan {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: var(--s4);
-  margin-block: var(--s7);
-}
-.plan-dim { position: relative; display: flex; align-items: center; justify-content: center; }
-.plan-dim::before {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  left: 50%;
-  width: 1px;
-  background: var(--rule-2);
-}
-.plan-dim::after {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  left: 6px;
-  right: 6px;
-  border-block: 1px solid var(--rule-2);
-}
-.plan-dim span {
-  position: relative;
-  z-index: 1;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  padding-block: 0.5rem;
-  background: var(--void);
-  font-family: var(--mono);
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ash-dim);
-}
-
-.lanes { border-top: 1px solid var(--rule-2); }
-.lane {
-  height: clamp(24px, 3vw, 34px);
-  display: flex;
-  align-items: center;
-  padding-left: 0.7rem;
-  border-bottom: 1px solid var(--rule);
-}
-.lane:last-child { border-bottom-color: var(--rule-2); }
-.lane span {
-  font-family: var(--mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.14em;
-  color: var(--ash-dim);
-}
-.spec-lede { margin-bottom: var(--s5); }
-.plan-cap {
-  grid-column: 2;
-  margin-top: 0.7rem;
-  font-family: var(--mono);
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ash-dim);
-}
+/* ponytail: no cross-section drawing. The headline states the width and the
+   six reasons carry the rest; a diagram of five stacked bands added nothing. */
+.spec-lede { margin-block: var(--s6) var(--s5); }
 
 /* Six reasons, ruled and set in two columns — no boxes, no repeated cards */
 .why { columns: 2; column-gap: clamp(2rem, 5vw, 4.5rem); border-top: 1px solid var(--rule); }
@@ -743,34 +748,45 @@ html[data-theme='light'] .mark { filter: invert(1) saturate(0.9); }
 }
 .why-row dd { color: var(--ash); font-size: 1rem; line-height: 1.6; max-width: 46ch; }
 
-/* ═══ TOOLING — deliberately small ══════════════════════════════════════ */
-.tool {
-  max-width: 780px;
+/* ═══ TOOLING — two spec sheets, side by side ═══════════════════════════ */
+/* Each tool is a named thing with an author and a date, so it is written up the
+   way the rest of the page writes up facts: a titled header over a hairline,
+   prose, then a ruled .facts table. No new table component. */
+.tools {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s5);
-  align-items: start;
+  margin-top: var(--s7);
+}
+@media (max-width: 820px) { .tools { grid-template-columns: 1fr; } }
+
+.tool {
+  display: flex;
+  flex-direction: column;
   padding: var(--s5);
   border: 1px solid var(--rule);
   border-radius: var(--r);
   background: var(--basalt);
+  transition: border-color 0.35s var(--ease);
 }
-@media (max-width: 560px) { .tool { grid-template-columns: 1fr; gap: var(--s4); } }
-.tool + .tool { margin-top: var(--s4); }
-.tool img { width: 76px; height: 76px; border-radius: var(--r); }
+.tool:hover { border-color: var(--rule-2); }
+
+.tool-head {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--s4);
+  align-items: center;
+  padding-bottom: var(--s4);
+  margin-bottom: var(--s4);
+  border-bottom: 1px solid var(--rule-2);
+}
+.tool img { width: 56px; height: 56px; border-radius: var(--r-sm); }
 .tool-mark { background: none; padding: 4px; }
 html[data-theme='light'] .tool-mark { filter: invert(1) saturate(0.9); }
-.tool .h3 { margin-bottom: 0.2rem; }
-.tool p { color: var(--ash); font-size: 1rem; max-width: 62ch; margin-top: 0.35rem; }
-.tool-credit {
-  margin-top: var(--s3);
-  font-family: var(--mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ash-dim);
-}
-.tool-credit b { color: var(--ash); font-weight: 500; }
+.tool-kind { margin-top: 0.3rem; color: var(--ash-dim); }
+/* The description takes the slack so both .facts tables sit on the same line. */
+.tool > p { flex: 1; color: var(--ash); font-size: 1rem; }
+.tool .facts { margin-top: var(--s5); }
 
 /* ═══ ALLIANCE — an archived record, set in past tense ══════════════════ */
 .archive {

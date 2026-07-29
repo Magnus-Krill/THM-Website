@@ -54,8 +54,10 @@ holds to. In short:
   (body serif), **IBM Plex Mono** (labels and data).
 - No glassmorphism, no `backdrop-filter`, no glows or coloured shadows.
 - No illustrated highway. The recurring device is the hairline: `hr.seam`
-  between sections, `.road` beside the wordmark, the ruled `.lanes` cross-section,
-  and the `.log-rail` that fills as you scroll.
+  between sections, `.road` beside the wordmark, and the `.log-rail` that fills
+  as you scroll. There is no cross-section drawing — the copy states the width.
+- The map is `.net` (text left, `.map` plate right) and opens full size in the
+  `#map-zoom` native `<dialog>`; `thm.js` only wires up open/close.
 - Scroll reveal: `.rv` elements get `.in` via `IntersectionObserver`. Profile
   pages use the older `.reveal` / `.visible` pair; `thm.js` handles both.
 - Every animation respects `prefers-reduced-motion`; content is never gated on a
@@ -69,7 +71,7 @@ components as the landing page — `.head`, `.h2`, `.prose`, `.plate`, `.facts`,
 
 When adding a player, copy any existing profile — they are all built from one
 template. Keep the font `<link>`, the pre-paint theme script, `/js/skin.js`, and
-`/js/thm.js?v=5`.
+`/js/thm.js?v=6`.
 
 The skin viewer is `public/js/skin.js`, shared by every profile and configured
 from the canvas element, so there is no per-page copy of it:

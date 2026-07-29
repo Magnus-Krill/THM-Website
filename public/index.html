@@ -333,29 +333,57 @@
           <span class="kicker mono">Network</span>
           <span class="meta mono mono-sm">8 axes &middot; main and diagonal</span>
         </div>
-        <h2 class="h2 head-title rv">The grid, as it stands.</h2>
 
-        <figure class="map plate rv d1">
-          <div class="plate-head">
-            <span class="mono mono-sm">Nether survey</span>
-            <span class="mono mono-sm"
-              >Updated <span id="map-updated-time">n/a</span></span
-            >
+        <div class="net">
+          <div class="net-text rv">
+            <h2 class="h2 head-title">The grid, as it stands.</h2>
+            <p class="lede">
+              Eight axes out of spawn &mdash; four cardinal, four diagonal &mdash;
+              all paved to the Overworld border.
+            </p>
+            <p class="net-note">
+              One grid square is three million blocks. The 3.75M marks are where
+              the Overworld border falls in Nether coordinates, which is where
+              every main axis ends.
+            </p>
+            <dl class="facts">
+              <div><dt>Cardinals paved</dt><dd>2 Mar 2026</dd></div>
+              <div><dt>Last tunnel</dt><dd>8 May 2026</dd></div>
+              <div><dt>Survey updated</dt><dd id="map-updated-time">n/a</dd></div>
+            </dl>
           </div>
-          <img
-            src="/images/highway-map.webp"
-            alt="Map of the 6b6t Nether highway network maintained by THM"
-            width="1600"
-            height="900"
-            loading="lazy" />
-          <figcaption class="map-caption">
-            Eight axes out of spawn, main and diagonal. One grid square is three
-            million blocks, and the 3.75M marks are where the Overworld border
-            falls in Nether coordinates.
-          </figcaption>
-        </figure>
+
+          <figure class="map plate rv d1">
+            <div class="plate-head">
+              <span class="mono mono-sm">Nether survey</span>
+              <span class="mono mono-sm">6b6t</span>
+            </div>
+            <button class="map-open" type="button" aria-label="Enlarge the map">
+              <img
+                src="/images/highway-map.webp"
+                alt="Map of the 6b6t Nether highway network maintained by THM"
+                width="2800"
+                height="2000"
+                loading="lazy" />
+            </button>
+            <figcaption class="map-caption mono mono-sm">
+              Tap the map to enlarge
+            </figcaption>
+          </figure>
+        </div>
       </div>
     </section>
+
+    <dialog class="zoom" id="map-zoom" aria-label="Nether highway map, enlarged">
+      <button class="zoom-close mono mono-sm" type="button">Close &times;</button>
+      <div class="zoom-scroll">
+        <img
+          src="/images/highway-map.webp"
+          alt="Map of the 6b6t Nether highway network maintained by THM"
+          width="2800"
+          height="2000" />
+      </div>
+    </dialog>
 
     <!-- ══ Standard ═════════════════════════════════════════════════════ -->
     <section id="standard" class="band">
@@ -373,21 +401,7 @@
           </p>
         </div>
 
-        <figure class="plan rv d1">
-          <div class="plan-dim"><span>5 blocks</span></div>
-          <div class="lanes">
-            <div class="lane"><span>1</span></div>
-            <div class="lane"><span>2</span></div>
-            <div class="lane"><span>3</span></div>
-            <div class="lane"><span>4</span></div>
-            <div class="lane"><span>5</span></div>
-          </div>
-          <figcaption class="plan-cap">
-            Cross-section · obsidian, five wide, nothing in the middle
-          </figcaption>
-        </figure>
-
-        <p class="lede spec-lede rv">Six reasons it stuck:</p>
+        <p class="lede spec-lede rv d1">Six reasons it stuck:</p>
 
         <dl class="why rv">
           <div class="why-row">
@@ -444,44 +458,64 @@
           <span class="meta mono mono-sm">Both written by members</span>
         </div>
 
-        <div class="tool rv">
-          <img
-            src="/images/kitbot-icon.webp"
-            alt="Kitbot avatar"
-            width="76"
-            height="76"
-            loading="lazy" />
-          <div>
-            <h3 class="h3">Kitbot</h3>
+        <div class="rv">
+          <h2 class="h2 head-title">We wrote our own.</h2>
+          <p class="lede">
+            Nobody hands out kits for a 3.75 million block dig. Two tools carry
+            the repetitive half of the work, and both came from inside the clan.
+          </p>
+        </div>
+
+        <div class="tools">
+          <article class="tool rv d1">
+            <header class="tool-head">
+              <img
+                src="/images/kitbot-icon.webp"
+                alt="Kitbot avatar"
+                width="76"
+                height="76"
+                loading="lazy" />
+              <div>
+                <h3 class="h3">Kitbot</h3>
+                <p class="tool-kind mono mono-sm">Discord bot</p>
+              </div>
+            </header>
             <p>
               Hands out kits, teleports members to the working end of a highway
               on demand, and tracks how far each axis has got.
             </p>
-            <p class="tool-credit">
-              Built by <b>Ooranges</b> &middot; maintained by <b>Leon_170709</b>
-            </p>
-          </div>
-        </div>
+            <dl class="facts">
+              <div><dt>Built by</dt><dd>Ooranges</dd></div>
+              <div><dt>Maintained by</dt><dd>Leon_170709</dd></div>
+              <div><dt>Handed over</dt><dd>January 2026</dd></div>
+            </dl>
+          </article>
 
-        <div class="tool rv d1">
-          <img
-            src="/images/THM2-transparent.webp"
-            alt="THM clan mark"
-            class="tool-mark"
-            width="76"
-            height="76"
-            loading="lazy" />
-          <div>
-            <h3 class="h3">THM Meteor add-on</h3>
+          <article class="tool rv d2">
+            <header class="tool-head">
+              <img
+                src="/images/THM2-transparent.webp"
+                alt="THM clan mark"
+                class="tool-mark"
+                width="76"
+                height="76"
+                loading="lazy" />
+              <div>
+                <h3 class="h3">THM Meteor add-on</h3>
+                <p class="tool-kind mono mono-sm">Meteor Client add-on</p>
+              </div>
+            </header>
             <p>
-              Digs five-wide tunnels, or paves finished ones with obsidian. Keeping
-              the two jobs separate lets a crew split the work and restock far less
-              often.
+              Digs five-wide tunnels, or paves finished ones with obsidian.
+              Keeping the two jobs separate lets a crew split the work and
+              restock far less often.
             </p>
-            <p class="tool-credit">
-              By <b>Leon_170709</b> &middot; released 30 Jan 2026
-            </p>
-          </div>
+            <dl class="facts">
+              <div><dt>Written by</dt><dd>Leon_170709</dd></div>
+              <div><dt>Released</dt><dd>30 Jan 2026</dd></div>
+              <div><dt>Two jobs</dt><dd>Dig &middot; Pave</dd></div>
+            </dl>
+          </article>
         </div>
       </div>
     </section>
@@ -662,6 +696,6 @@
       </div>
     </footer>
 
-    <script src="/js/thm.js?v=5"></script>
+    <script src="/js/thm.js?v=6"></script>
   </body>
 </html>
