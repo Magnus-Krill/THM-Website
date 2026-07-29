@@ -52,33 +52,54 @@ CSS and JS are **not** inline. Each `<head>` carries exactly two inline
 `style.colorScheme`, so a new document never flashes white), and a
 `type="speculationrules"` block — JSON, not behaviour.
 
-**Navigation is meant to feel like one document — no page ever shows a white
-frame.** Four pieces. Every page needs all four; a page missing any one of them
-flashes, and that is the bug that keeps coming back:
+### Navigation is client-side
+
+**A same-origin click never loads a document.** `thm.js` intercepts it, fetches
+the page, and replaces `<body>` — so nothing blanks, in any browser. Chrome and
+Safari wrap the swap in `document.startViewTransition` and crossfade it; Firefox
+gets an instant swap. This is the only way to match a site that stays smooth in
+Firefox, which has neither view transitions nor speculation rules.
+
+The rule this imposes on all JS: **`thm.js` runs its page wiring more than
+once.**
+
+- `initPage()` — everything that touches page content. Runs on load and after
+  every swap. It disconnects the previous page's `IntersectionObserver`s first
+  (`track()` collects them); anything else stateful must be equally re-entrant.
+  The nav is part of the swapped body, so the theme toggle and burger are wired
+  here too.
+- `initShell()` — window-level listeners only (scroll, the router). Runs once.
+- Scripts inside swapped-in markup **never execute**. That is why pages carry no
+  `<script>` for three.js or `skin.js`: `skinViewer()` loads them on demand, once
+  per session, when a `#skin-canvas` is present. `skin.js` is therefore
+  `window.thmSkin()`, not an IIFE, and its render loop stops itself when the
+  canvas is detached — otherwise every visited profile leaks a WebGL context.
+- Failure hands control back: a bad fetch or an empty document sets
+  `location.href`, so a broken page is a normal page load, never a dead end.
+- Without JS every link is an ordinary link, which is why the rest still matters.
+
+**No page may show a white frame on a direct load either.** Three pieces, and a
+page missing any one of them flashes:
 
 1. **The pre-paint script sets the background**, not just the theme:
    `r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c'` (the two `--void`
-   values). This is the piece that actually removes the flash, in every browser.
-   It stays inline — an external file would be one blocking request in front of
-   first paint, which is the thing being fixed. `<meta name="color-scheme">` and
-   `color-scheme` in `thm.css` back it up for the no-JS case, but cannot replace
-   it: `"dark light"` resolves to **light** on a light desktop and paints white
-   even when the visitor picked the dark theme.
-2. `@view-transition { navigation: auto; }` in `thm.css`, **at top level**.
-   Do not wrap it in `@media` — the opt-in is unreliable there, and an ignored
-   opt-in means a blank frame. Reduced motion is handled instead by killing
-   `animation` on `::view-transition-old/new/group(*)`, which the global
-   reduced-motion `*` block does not reach. Declare it exactly **once**.
+   values). It stays inline — an external file would be a blocking request in
+   front of first paint, which is the thing being fixed. `<meta
+   name="color-scheme">` and `color-scheme` in `thm.css` back it up but cannot
+   replace it: `"dark light"` resolves to **light** on a light desktop and paints
+   white even when the visitor picked the dark theme. The theme toggle sets the
+   same three properties, or the next swap paints the old theme for a frame.
+2. `@view-transition { navigation: auto; }` in `thm.css`, **at top level**, once.
+   Not inside `@media` — the opt-in is unreliable there. Reduced motion is
+   handled by killing `animation` on `::view-transition-old/new/group(*)`, which
+   the global reduced-motion `*` block does not reach.
 3. Speculation rules — one document rule per page, `href_matches: "/*"` at
-   `"eagerness": "eager"`, so every same-origin link (including `/#log` and
-   friends, which a URL list misses) is fetched at load. Nothing to maintain when
-   a page is added. Plain `<link rel="prefetch">` sits beside it as the Firefox
-   fallback.
-4. Firefox has neither view transitions nor speculation rules. Piece 1 is what
-   makes it acceptable there, so never trade it away for 2 or 3.
+   `"eagerness": "eager"`, plus plain `<link rel="prefetch">`. Both now serve the
+   router's `fetch()` out of cache, and cover hard loads (typed URL, middle
+   click, no JS). Nothing to maintain when a page is added.
 
-When adding or editing a page, copy an existing `<head>` **whole**. Diff it
-against a working one before finishing.
+When adding or editing a page, copy an existing `<head>` **whole**, and add no
+script tags beyond `/js/thm.js`. Diff against a working page before finishing.
 
 Images all carry `loading="lazy" decoding="async"`; the only eager image is the
 22px nav mark. Keep both attributes on anything new.
@@ -116,11 +137,12 @@ components as the landing page — `.head`, `.h2`, `.prose`, `.plate`, `.facts`,
 `.skin-hint` / `#skin-canvas` for the 3D viewer.
 
 When adding a player, copy any existing profile — they are all built from one
-template. Keep the font `<link>`, the pre-paint theme script, `/js/skin.js`, and
-`/js/thm.js?v=7`.
+template. Keep the font `<link>`, the pre-paint theme script, and
+`/js/thm.js?v=8`, which is the page's only script tag.
 
 The skin viewer is `public/js/skin.js`, shared by every profile and configured
-from the canvas element, so there is no per-page copy of it:
+from the canvas element, so there is no per-page copy of it. Nothing loads it
+from markup — `thm.js` pulls it in with three.js when it sees the canvas:
 
 ```html
 <canvas id="skin-canvas" data-username="Ryazor" data-slim="false"></canvas>

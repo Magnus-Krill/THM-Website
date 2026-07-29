@@ -12,14 +12,22 @@
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" type="image/png" href="/images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
+    <!-- Frame one: the right background with no stylesheet and no JS involved.
+         Everything after this is a correction on top of it, never a
+         prerequisite. The meta above cannot do this job — "dark light" resolves
+         to light on a light desktop and paints white. -->
+    <style>
+      html { background: #0d0b0c; }
+      @media (prefers-color-scheme: light) { html { background: #f3efe8; } }
+    </style>
     <script>
-      // Theme, colour-scheme and canvas colour, all before first paint, so no
-      // page ever shows a white frame. The hexes are --void per theme: the meta
-      // above can only say "dark light", which resolves to light — and paints
-      // white — on a light desktop, whatever theme the visitor picked here.
+      // Theme, colour-scheme and canvas colour before first paint. localStorage
+      // throws outright when Firefox is set to block storage, and an exception
+      // here left the whole page white, so it is caught.
       (function () {
-        var t = localStorage.getItem('thm-theme') ||
-          (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
+        var t = null;
+        try { t = localStorage.getItem('thm-theme'); } catch (e) {}
+        t = t || (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
         var r = document.documentElement;
         r.dataset.theme = t;
         r.style.colorScheme = t;
@@ -740,6 +748,6 @@
       </div>
     </footer>
 
-    <script src="/js/thm.js?v=7"></script>
+    <script src="/js/thm.js?v=8"></script>
   </body>
 </html>

@@ -1,20 +1,27 @@
 /* THM · 3D Minecraft skin viewer
    Config comes from the canvas element, so this file is shared by every profile:
      <canvas id="skin-canvas" data-username="Ryazor" data-slim="false"></canvas>
-   Needs three.js loaded first. */
+   Needs three.js loaded first.
+
+   Called by thm.js — once per profile page, including profiles the router swaps
+   in, which is why this is a named function rather than an IIFE. */
 'use strict';
-(function () {
+window.thmSkin = function () {
   'use strict';
 
   // ─── Config ────────────────────────────────────────────────────────────────
   const canvas = document.getElementById('skin-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
+  if (canvas.dataset.live) return; // already running on this canvas
+  canvas.dataset.live = '1';
 
   const SLIM_ARMS = canvas.dataset.slim === 'true';   // true = Alex (3 px arms)
   // Fetched live from Minotar by username, so it follows the player's current
   // skin (within Minotar's ~6h cache). Falls back to a flat Steve if it fails.
+  // Keep the .png — Minotar 404s on .webp, and because the failure path is that
+  // silent Steve fallback, the whole roster loses its skins without an error.
   const SKIN_FILE = 'https://minotar.net/skin/' +
-    encodeURIComponent(canvas.dataset.username || 'Steve') + '.webp';
+    encodeURIComponent(canvas.dataset.username || 'Steve') + '.png';
   const CANVAS_W  = 220;
   const CANVAS_H  = 300;
 
@@ -258,6 +265,12 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let t = 0;
   (function loop() {
+    // The router removes the canvas when you navigate away; without this the
+    // loop and its WebGL context would outlive every page you visit.
+    if (!canvas.isConnected) {
+      renderer.dispose();
+      return;
+    }
     requestAnimationFrame(loop);
     t += 0.016;
     if (model) {
@@ -270,5 +283,5 @@
     }
     renderer.render(scene, camera);
   })();
-})();
+};
 

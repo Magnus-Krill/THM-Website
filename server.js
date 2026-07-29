@@ -68,7 +68,11 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
-// Serve all static files from the 'public' folder
+// Serve all static files from the 'public' folder.
+// No Cache-Control of our own, so Cloudflare caches at its own defaults and the
+// traffic stays off this box. The cost is that a changed thm.css or thm.js can
+// be served stale — bump the `?v=` on the script tags when you change them, and
+// purge the CDN for CSS, which has no version query.
 app.use(express.static(PUBLIC_DIR));
 
 // Initialize server with retry on EADDRINUSE
