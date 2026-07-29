@@ -228,7 +228,7 @@ Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500
   `--r` 14px (panels, plates, frames, map).
 - **Ease**: `--ease: cubic-bezier(0.22, 0.9, 0.24, 1)`.
 
-Motion is rationed to four things:
+Motion is rationed to five things:
 
 1. **One load sequence** in the hero — eyebrow, wordmark, then thesis and plate,
    ending with `.road` drawing itself out toward the border (`@keyframes draw`).
@@ -239,9 +239,16 @@ Motion is rationed to four things:
    leader line to the rail that turns `--signal` once the entry is seen.
 4. **Hover micro-interactions**: nav underline grows from the left, `.arw` nudges
    4px, roster names shift 4px into signal.
+5. **Page navigation crossfades** — `@view-transition { navigation: auto; }` in
+   `thm.css`, so landing page ↔ profile never blanks. The default root crossfade,
+   no named elements. Every page prefetches its outgoing links at load, and its
+   pre-paint script sets the canvas to `--void`, so there is no white frame to
+   cross-fade over in the first place.
 
-`prefers-reduced-motion` collapses all of it: the rail is fully drawn and the
-stat counters print their final value.
+`prefers-reduced-motion` collapses all of it: the rail is fully drawn, the stat
+counters print their final value, and the navigation crossfade drops to an
+instant swap (`animation: none` on the `::view-transition-*` pseudos — the
+opt-in itself stays declared).
 
 ## Components
 

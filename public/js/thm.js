@@ -166,6 +166,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── Every other image enlarges too ───────────────────────────────────────
+  // ponytail: one dialog built here and one handler per image, instead of
+  // wrapping 30-odd <img> in buttons across six pages. The nav mark and the
+  // map (its own pannable dialog above) opt out.
+  const box = document.createElement('dialog');
+  box.className = 'zoom lightbox';
+  box.innerHTML =
+    '<button class="zoom-close mono mono-sm" type="button">Close &times;</button><img alt="" />';
+  const boxImg = box.querySelector('img');
+  document.body.append(box);
+  box.querySelector('.zoom-close').addEventListener('click', () => box.close());
+  box.addEventListener('click', (e) => {
+    if (e.target !== boxImg) box.close();
+  });
+
+  document.querySelectorAll('img').forEach((img) => {
+    if (img.closest('.nav, .map-open, .zoom')) return;
+    img.tabIndex = 0;
+    img.setAttribute('role', 'button');
+    img.title = 'Click to enlarge';
+    const show = () => {
+      boxImg.src = img.currentSrc || img.src;
+      boxImg.alt = img.alt;
+      box.showModal();
+    };
+    img.addEventListener('click', show);
+    img.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      show();
+    });
+  });
+
   // ── Map survey timestamp ─────────────────────────────────────────────────
   const mapEl = document.getElementById('map-updated-time');
   if (mapEl) {

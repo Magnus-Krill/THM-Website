@@ -6,15 +6,21 @@
     <title>Kyr0Zen · THM</title>
     <meta name="description" content="Kyr0Zen, co-owner of The Highway Men and the artist behind its logos and banners." />
     <meta name="theme-color" content="#0d0b0c" />
+    <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
+    <meta name="color-scheme" content="dark light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="icon" type="image/png" href="../../images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="../../images/THM2-transparent.webp" />
     <script>
-      // Set the theme before first paint so there is no flash.
+      // Theme, colour-scheme and canvas colour, all before first paint, so no
+      // page ever shows a white frame. The hexes are --void per theme.
       (function () {
         var t = localStorage.getItem('thm-theme') ||
           (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
-        document.documentElement.dataset.theme = t;
+        var r = document.documentElement;
+        r.dataset.theme = t;
+        r.style.colorScheme = t;
+        r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c';
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,6 +29,16 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="/css/thm.css" />
+    <link rel="prefetch" href="/" />
+    <!-- Every same-origin link (logo, crumb, nav's /#log, /#network …) fetched at
+         load, not at idle. The link above covers Firefox. -->
+    <script type="speculationrules">
+      {
+        "prefetch": [
+          { "source": "document", "where": { "href_matches": "/*" }, "eagerness": "eager" }
+        ]
+      }
+    </script>
     <noscript
       ><style>
         .rv, .reveal { opacity: 1 !important; transform: none !important; }
@@ -34,7 +50,7 @@
 
     <nav class="nav" aria-label="Main">
       <a href="../../" class="nav-logo" aria-label="The Highway Men, home">
-        <img src="../../images/THM2-transparent.webp" alt="" width="22" height="22" />
+        <img src="../../images/THM2-transparent.webp" alt="" width="22" height="22" decoding="async" />
         <span>THM</span>
       </a>
       <ul class="nav-links" id="nav-menu">
@@ -148,64 +164,72 @@
         </div>
         <div class="art-gallery rv">
           <figure class="art-item">
-            <img src="art/THM_banner_2026.webp" alt="THM banner" loading="lazy" />
+            <img src="art/THM_banner_2026.webp" alt="THM banner" loading="lazy" decoding="async" />
             <figcaption>THM banner <span>2026</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/THM_poster.webp" alt="THM poster" loading="lazy" />
+            <img src="art/THM_poster.webp" alt="THM poster" loading="lazy" decoding="async" />
             <figcaption>THM poster</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/YungTickleMonster_THM_poster.webp" alt="THM poster" loading="lazy" />
+            <img src="art/YungTickleMonster_THM_poster.webp" alt="THM poster" loading="lazy" decoding="async" />
             <figcaption>THM poster <span>yung tickle monster</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/THM_halloween_banner.webp" alt="THM Halloween banner" loading="lazy" />
+            <img src="art/THM_halloween_banner.webp" alt="THM Halloween banner" loading="lazy" decoding="async" />
             <figcaption>THM Halloween banner <span>Oct 2025</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/THM_Christmas_banner.webp" alt="THM Christmas banner" loading="lazy" />
+            <img src="art/THM_Christmas_banner.webp" alt="THM Christmas banner" loading="lazy" decoding="async" />
             <figcaption>THM Christmas banner <span>Dec 2025</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/6b6t_Christmas_logo.webp" alt="6b6t Christmas logo" loading="lazy" />
+            <img src="art/6b6t_Christmas_logo.webp" alt="6b6t Christmas logo" loading="lazy" decoding="async" />
             <figcaption>6b6t Christmas logo <span>Competition winner</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Cosmical_new_era_logo.webp" alt="Cosmical logo" loading="lazy" />
+            <img src="art/Cosmical_new_era_logo.webp" alt="Cosmical logo" loading="lazy" decoding="async" />
             <figcaption>Cosmical logo <span>New Era</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Purple_shaded_Cosmical_logo.webp" alt="Cosmical logo" loading="lazy" />
+            <img src="art/Purple_shaded_Cosmical_logo.webp" alt="Cosmical logo" loading="lazy" decoding="async" />
             <figcaption>Cosmical logo <span>Purple shade</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Cosmical_sketch_banner_v3.webp" alt="Cosmical banner" loading="lazy" />
+            <img src="art/Cosmical_sketch_banner_v3.webp" alt="Cosmical banner" loading="lazy" decoding="async" />
             <figcaption>Cosmical banner <span>Sketch v3</span></figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Excalibur_logo.webp" alt="Excalibur logo" loading="lazy" />
+            <img src="art/Excalibur_logo.webp" alt="Excalibur logo" loading="lazy" decoding="async" />
             <figcaption>Excalibur logo</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Bff_logo.webp" alt="BFF logo" loading="lazy" />
+            <img src="art/Bff_logo.webp" alt="BFF logo" loading="lazy" decoding="async" />
             <figcaption>BFF logo</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Dyselexia_logo.webp" alt="Dyselexia logo" loading="lazy" />
+            <img src="art/Dyselexia_logo.webp" alt="Dyselexia logo" loading="lazy" decoding="async" />
             <figcaption>Dyselexia logo</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/6b6t_Union_logo.webp" alt="6b6t Union Reborn logo" loading="lazy" />
+            <img src="art/6b6t_Union_logo.webp" alt="6b6t Union Reborn logo" loading="lazy" decoding="async" />
             <figcaption>6b6t Union Reborn logo</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/NCR_mugshot_banner.webp" alt="NCR mugshot banner" loading="lazy" />
+            <img src="art/NCR_mugshot_banner.webp" alt="NCR mugshot banner" loading="lazy" decoding="async" />
             <figcaption>NCR mugshot banner</figcaption>
           </figure>
           <figure class="art-item">
-            <img src="art/Logo_and_banner_for_3kderp.webp" alt="3kderp Client" loading="lazy" />
+            <img src="art/Logo_and_banner_for_3kderp.webp" alt="3kderp Client" loading="lazy" decoding="async" />
             <figcaption>3kderp Client <span>Logo and banner</span></figcaption>
+          </figure>
+          <figure class="art-item">
+            <img src="art/THM_server_banner1.webp" alt="THM Server Banner v1" loading="lazy" decoding="async" />
+            <figcaption>THMs first banner <span>2025</span></figcaption>
+          </figure>
+          <figure class="art-item">
+            <img src="art/THMPOSTER_LONG2_art_3.webp" alt="THM Poster" loading="lazy" decoding="async" />
+            <figcaption>THM Poster</figcaption>
           </figure>
         </div>
       </div>
@@ -255,6 +279,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="/js/skin.js?v=1"></script>
-    <script src="/js/thm.js?v=6"></script>
+    <script src="/js/thm.js?v=7"></script>
   </body>
 </html>

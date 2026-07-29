@@ -14,7 +14,7 @@
   // Fetched live from Minotar by username, so it follows the player's current
   // skin (within Minotar's ~6h cache). Falls back to a flat Steve if it fails.
   const SKIN_FILE = 'https://minotar.net/skin/' +
-    encodeURIComponent(canvas.dataset.username || 'Steve') + '.png';
+    encodeURIComponent(canvas.dataset.username || 'Steve') + '.webp';
   const CANVAS_W  = 220;
   const CANVAS_H  = 300;
 

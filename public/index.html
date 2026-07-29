@@ -8,14 +8,22 @@
       name="description"
       content="THM digs, paves and defends the Nether highways of 6b6t. Five blocks wide, from spawn to the world border." />
     <meta name="theme-color" content="#0d0b0c" />
+    <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
+    <meta name="color-scheme" content="dark light" />
     <link rel="icon" type="image/png" href="/images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
     <script>
-      // Set the theme before first paint so there is no flash.
+      // Theme, colour-scheme and canvas colour, all before first paint, so no
+      // page ever shows a white frame. The hexes are --void per theme: the meta
+      // above can only say "dark light", which resolves to light — and paints
+      // white — on a light desktop, whatever theme the visitor picked here.
       (function () {
         var t = localStorage.getItem('thm-theme') ||
           (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
-        document.documentElement.dataset.theme = t;
+        var r = document.documentElement;
+        r.dataset.theme = t;
+        r.style.colorScheme = t;
+        r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c';
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,6 +32,28 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="/css/thm.css" />
+    <!-- The roster is where people click next, so fetch those pages while idle. -->
+    <link rel="prefetch" href="/players/Ryazor/" />
+    <link rel="prefetch" href="/players/Kyr0zen/" />
+    <link rel="prefetch" href="/players/Leon_170709/" />
+    <link rel="prefetch" href="/players/mingailas/" />
+    <link rel="prefetch" href="/players/xm4nn/" />
+    <!-- Every same-origin link on the page, fetched at load rather than at idle,
+         so no click waits on the network. A document rule rather than a URL list
+         because the list missed anything with a #fragment. External links don't
+         match. The plain links above are the fallback for browsers without
+         speculation rules (Firefox). -->
+    <script type="speculationrules">
+      {
+        "prefetch": [
+          {
+            "source": "document",
+            "where": { "href_matches": "/*" },
+            "eagerness": "eager"
+          }
+        ]
+      }
+    </script>
     <noscript
       ><style>
         .rv, .reveal { opacity: 1 !important; transform: none !important; }
@@ -37,7 +67,7 @@
     <!-- ══ Nav ══════════════════════════════════════════════════════════ -->
     <nav class="nav" aria-label="Main">
       <a href="/" class="nav-logo" aria-label="The Highway Men, home">
-        <img src="/images/THM2-transparent.webp" alt="" width="22" height="22" />
+        <img src="/images/THM2-transparent.webp" alt="" width="22" height="22" decoding="async" />
         <span>THM</span>
       </a>
 
@@ -153,7 +183,8 @@
               class="mark"
               width="84"
               height="84"
-              loading="lazy" />
+              loading="lazy"
+              decoding="async" />
             <dl class="facts">
               <div><dt>Founder</dt><dd>mingailas</dd></div>
               <div><dt>First name</dt><dd>Moon</dd></div>
@@ -203,7 +234,7 @@
 
         <div class="log">
           <div class="log-rail" aria-hidden="true"></div>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">19 Oct 2024</p>
             <div class="log-body">
               <h3 class="h3">Founded as Moon</h3>
@@ -214,7 +245,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">Late 2024</p>
             <div class="log-body">
               <h3 class="h3">100K blocks a day</h3>
@@ -225,7 +256,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">Mar 2025</p>
             <div class="log-body">
               <h3 class="h3">Five wide becomes the rule</h3>
@@ -236,7 +267,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">21 Mar 2025</p>
             <div class="log-body">
               <h3 class="h3">The 12-hour dupe</h3>
@@ -247,7 +278,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">4 Aug 2025</p>
             <div class="log-body">
               <h3 class="h3">mingailas steps down</h3>
@@ -257,7 +288,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">27 Jan 2026</p>
             <div class="log-body">
               <h3 class="h3">Kitbot changes hands</h3>
@@ -267,7 +298,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">30 Jan 2026</p>
             <div class="log-body">
               <h3 class="h3">The Meteor add-on ships</h3>
@@ -278,7 +309,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">2 Mar 2026</p>
             <div class="log-body">
               <h3 class="h3">Cardinals paved to the border</h3>
@@ -288,7 +319,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">21 Mar 2026</p>
             <div class="log-body">
               <h3 class="h3">Ryazor takes over</h3>
@@ -298,7 +329,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">8 May 2026</p>
             <div class="log-body">
               <h3 class="h3">The last tunnel: 3.75M</h3>
@@ -309,7 +340,7 @@
               </p>
             </div>
           </article>
-          <article class="log-row">
+          <article class="log-row rv">
             <p class="log-date">Ongoing</p>
             <div class="log-body">
               <h3 class="h3">Sabotage, and repair</h3>
@@ -364,7 +395,8 @@
                 alt="Map of the 6b6t Nether highway network maintained by THM"
                 width="2800"
                 height="2000"
-                loading="lazy" />
+                loading="lazy"
+                decoding="async" />
             </button>
             <figcaption class="map-caption mono mono-sm">
               Tap the map to enlarge
@@ -381,7 +413,9 @@
           src="/images/highway-map.webp"
           alt="Map of the 6b6t Nether highway network maintained by THM"
           width="2800"
-          height="2000" />
+          height="2000"
+          loading="lazy"
+          decoding="async" />
       </div>
     </dialog>
 
@@ -474,7 +508,8 @@
                 alt="Kitbot avatar"
                 width="76"
                 height="76"
-                loading="lazy" />
+                loading="lazy"
+                decoding="async" />
               <div>
                 <h3 class="h3">Kitbot</h3>
                 <p class="tool-kind mono mono-sm">Discord bot</p>
@@ -499,7 +534,8 @@
                 class="tool-mark"
                 width="76"
                 height="76"
-                loading="lazy" />
+                loading="lazy"
+                decoding="async" />
               <div>
                 <h3 class="h3">THM Meteor add-on</h3>
                 <p class="tool-kind mono mono-sm">Meteor Client add-on</p>
@@ -594,7 +630,8 @@
           alt="Render of the six THM high ranks walking in line, the owner crowned"
           width="7715"
           height="4340"
-          loading="lazy" />
+          loading="lazy"
+          decoding="async" />
         <figcaption class="wrap mono mono-sm">
           The high ranks, rendered by a member of the clan
         </figcaption>
@@ -703,6 +740,6 @@
       </div>
     </footer>
 
-    <script src="/js/thm.js?v=6"></script>
+    <script src="/js/thm.js?v=7"></script>
   </body>
 </html>

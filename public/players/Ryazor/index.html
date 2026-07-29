@@ -6,15 +6,21 @@
     <title>Ryazor · THM</title>
     <meta name="description" content="Ryazor, owner of The Highway Men since March 2026." />
     <meta name="theme-color" content="#0d0b0c" />
+    <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
+    <meta name="color-scheme" content="dark light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="icon" type="image/png" href="../../images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="../../images/THM2-transparent.webp" />
     <script>
-      // Set the theme before first paint so there is no flash.
+      // Theme, colour-scheme and canvas colour, all before first paint, so no
+      // page ever shows a white frame. The hexes are --void per theme.
       (function () {
         var t = localStorage.getItem('thm-theme') ||
           (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
-        document.documentElement.dataset.theme = t;
+        var r = document.documentElement;
+        r.dataset.theme = t;
+        r.style.colorScheme = t;
+        r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c';
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -23,6 +29,16 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="/css/thm.css" />
+    <link rel="prefetch" href="/" />
+    <!-- Every same-origin link (logo, crumb, nav's /#log, /#network …) fetched at
+         load, not at idle. The link above covers Firefox. -->
+    <script type="speculationrules">
+      {
+        "prefetch": [
+          { "source": "document", "where": { "href_matches": "/*" }, "eagerness": "eager" }
+        ]
+      }
+    </script>
     <noscript
       ><style>
         .rv, .reveal { opacity: 1 !important; transform: none !important; }
@@ -34,7 +50,7 @@
 
     <nav class="nav" aria-label="Main">
       <a href="../../" class="nav-logo" aria-label="The Highway Men, home">
-        <img src="../../images/THM2-transparent.webp" alt="" width="22" height="22" />
+        <img src="../../images/THM2-transparent.webp" alt="" width="22" height="22" decoding="async" />
         <span>THM</span>
       </a>
       <ul class="nav-links" id="nav-menu">
@@ -182,6 +198,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="/js/skin.js?v=1"></script>
-    <script src="/js/thm.js?v=6"></script>
+    <script src="/js/thm.js?v=7"></script>
   </body>
 </html>
