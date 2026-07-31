@@ -68,6 +68,22 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
+// Cape index for THM-Addons — its CapeManager GETs this and expects
+// {"capes":[{"id","url"}]}, then saves each download as <id>.webp. Built from
+// the directory at request time, so dropping a .webp into public/cape/ is the
+// whole job of adding a cape.
+// ponytail: x-forwarded-proto because Cloudflare terminates TLS and the client
+// is HttpURLConnection, which won't follow the http→https redirect — it sees
+// the 301, gives up, and no cape loads.
+app.get('/cape/index', (req, res) => {
+  const base = `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`;
+  let files = [];
+  try {
+    files = fs.readdirSync(path.join(PUBLIC_DIR, 'cape')).filter((f) => f.endsWith('.webp'));
+  } catch {}
+  res.json({ capes: files.map((f) => ({ id: path.basename(f, '.webp'), url: `${base}/cape/${f}` })) });
+});
+
 // Serve all static files from the 'public' folder.
 // No Cache-Control of our own, so Cloudflare caches at its own defaults and the
 // traffic stays off this box. The cost is that a changed thm.css or thm.js can

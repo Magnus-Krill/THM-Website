@@ -28,10 +28,18 @@ public/
   map-meta.json              # Highway map's last-updated timestamp
 ```
 
-`server.js` does three things: `express.static('public')`, a `GET /api/stats`
+`server.js` does four things: `express.static('public')`, a `GET /api/stats`
 endpoint that reads `public/stats.json` with `Cache-Control: no-store` so
-Cloudflare can't cache it, and PNG→WebP. It retries on `EADDRINUSE` up to 5
-times with exponential backoff.
+Cloudflare can't cache it, `GET /cape/index`, and PNG→WebP. It retries on
+`EADDRINUSE` up to 5 times with exponential backoff.
+
+`GET /cape/index` is the cape index for the THM-Addons mod (its `CapeManager`
+fetches it as `api.capeIndex`). It answers `{"capes":[{"id","url"}]}`, one entry
+per `.webp` in `public/cape/`, `id` being the filename without the extension —
+the mod saves each download as `<id>.webp`. Adding a cape is dropping a `.webp`
+in that directory; nothing else to edit. The `url` is absolute and built from
+`x-forwarded-proto`, since the client is a Java `HttpURLConnection` that won't
+follow Cloudflare's http→https redirect.
 
 PNG→WebP: on boot, every `.png` under `public/` gets a lossless `.webp` twin via
 system **ffmpeg** (`-c:v libwebp`), skipped when the twin is already newer than
