@@ -1,36 +1,33 @@
-# Product
+# THM Website · PRODUCT.md
 
 ## Register
-
 brand
 
-## Users
+## Product
+The Highway Men (THM) clan landing page for 6b6t, an anarchic Minecraft server. Design IS the product — the page communicates identity, history, and authority to the Minecraft community. No transactions; pure impression.
 
-Minecraft players on the 6b6t anarchy server — potential recruits looking to join the largest highway clan, current members checking the roster and map, and rivals or observers gauging THM's scale and seriousness. They land here from Discord links or in-game word of mouth. Context: young, technical, anarchy-server culture — they recognize craft and dismiss anything that feels fake or corporate.
+## Target users
+- Active and prospective 6b6t players who encounter THM in-game or via Discord
+- Community members checking clan history, roster, highway infrastructure
+- Server newcomers evaluating whether to join
 
-## Product Purpose
+## Purpose
+Establish THM as the dominant highway infrastructure clan on 6b6t. Showcase the highway map, history timeline, clan roster, Kitbot tool, and the 5 Blocks Wide standard. Drive Discord joins.
 
-The Highway Men's public face. Its job is to communicate dominance, scale, and legitimacy: this is not a casual group, it is the definitive highway infrastructure organization on 6b6t. Success looks like a visitor immediately grasping the size and seriousness of the operation and feeling compelled to join or acknowledge THM's position.
-
-## Brand Personality
-
-Bold · Organized · Relentless
-
-Voice: direct, no hype, earned authority. Tone: serious operation, not a fan club. Emotional goal: respect — not excitement or warmth. The work speaks; the site amplifies.
+## Brand personality
+- **Infrastructure authority** — methodical, large-scale, permanent
+- **Anarchy-server edge** — raw, earned, unapologetic
+- **Community** — real people, real names, real history
 
 ## Anti-references
+- Corporate SaaS landing pages (too clean, no personality)
+- Gaming clan sites with aggressive neon-on-black RGB aesthetics
+- Cozy/pastel gaming aesthetics (wrong register — this is an anarchy server)
 
-- Generic gaming clan sites: cheesy HUD overlays, neon green on black, stock fantasy fonts, Roblox-energy, over-literal Minecraft theming.
-- Corporate SaaS / startup pages: cream/paper backgrounds, hero-metric stat cards, "Join the waitlist" energy, decorative glassmorphism used as a default rather than a deliberate choice.
-
-## Design Principles
-
-1. **Earned, not decorated.** Visual weight should reflect actual scale. Stats, timeline entries, and map imagery carry the identity — ornamentation that isn't backed by real content is noise.
-2. **Infrastructure aesthetic.** THM builds highways, not brands. The design should feel like a system with purpose: precise, functional, with tension rather than decoration.
-3. **Restraint signals confidence.** The most serious operations don't shout. Dense animation, gradient-everything, and neon overload read as overcompensation. Control the palette; let the scale do the talking.
-4. **Anarchy-adjacent, not anarchy-clichéd.** The server is raw and unmoderated; the clan is the counter-force imposing order on it. The design should live in that tension: dark and gritty in atmosphere, but structured and legible in layout.
-5. **Respect reduced motion.** Every animation has a `prefers-reduced-motion` fallback. Content is never gated on a JS-triggered class.
-
-## Accessibility & Inclusion
-
-WCAG 2.1 AA. Body text ≥4.5:1 contrast against background. Large/bold headings ≥3:1. Reduced-motion media query on all animations (already partially implemented). Keyboard-navigable nav.
+## Design principles
+- Dark theme default (anarchy server context: low-light, terminal-adjacent)
+- Fire/lava palette anchored by `--fire: #e25c1c` — volcanic, earned, dangerous
+- Bricolage Grotesque display + Syne body + Space Mono labels
+- Glass surface treatment for interactive cards
+- Live stats from bot API (Discord members, daily blocks placed, official members)
+- Nether highway map updated every 24 hours from bot sync
