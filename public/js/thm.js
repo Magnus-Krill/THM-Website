@@ -12,7 +12,6 @@
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Theme, applied again here for pages loaded without the inline head script.
 // Every localStorage touch in this file is guarded: it throws when the browser
 // is set to block storage, and an exception at this point would take the router
 // down with it — leaving plain document loads, which is the bug being fixed.
@@ -31,9 +30,28 @@ const store = (k, v) => {
   }
 };
 
-document.documentElement.dataset.theme =
-  stored('thm-theme') ||
-  (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+// The three properties the head script already set, plus the theme-color metas
+// it deliberately leaves alone — browser chrome is not paint-critical, and this
+// is the only place that has to know both colours. Both metas get the same
+// value, so whichever `media` matches answers correctly and a manual choice
+// beats the system one.
+const VOID = { light: '#f3efe8', dark: '#0d0b0c' };
+
+function applyTheme(t) {
+  const r = document.documentElement;
+  r.dataset.theme = t;
+  r.style.colorScheme = t;
+  r.style.background = VOID[t];
+  document.head
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((m) => (m.content = VOID[t]));
+}
+
+// Applied again here for pages loaded without the head script, and because the
+// metas are not its job.
+applyTheme(
+  stored('thm-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+);
 
 // ─── Per-page state, rebuilt by initPage() ──────────────────────────────────
 let observers = [];
@@ -80,13 +98,10 @@ function themeToggle() {
       );
     label();
     btn.addEventListener('click', () => {
+      // applyTheme keeps the canvas colour in step with the head script's, or
+      // the next navigation paints the old theme's background for a frame.
       const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-      const root = document.documentElement;
-      root.dataset.theme = next;
-      root.style.colorScheme = next;
-      // Keep the canvas colour in step with the head script's, or the next
-      // navigation paints the old theme's background for a frame.
-      root.style.background = next === 'light' ? '#f3efe8' : '#0d0b0c';
+      applyTheme(next);
       store('thm-theme', next);
       label();
     });
@@ -235,7 +250,6 @@ function zoomableImages() {
     if (img.closest('.nav, .map-open, .zoom')) return;
     img.tabIndex = 0;
     img.setAttribute('role', 'button');
-    img.title = 'Click to enlarge';
     const show = () => {
       boxImg.src = img.currentSrc || img.src;
       boxImg.alt = img.alt;
@@ -276,7 +290,7 @@ async function skinViewer() {
   if (!document.getElementById('skin-canvas')) return;
   try {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-    await loadScript('/js/skin.js?v=2');
+    await loadScript('/js/skin.js?v=3');
     thmSkin();
   } catch {
     // No viewer; the plate keeps its facts.

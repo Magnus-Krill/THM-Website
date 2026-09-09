@@ -1,5 +1,5 @@
-// Set environment to production mode
-process.env.NODE_ENV = 'production';
+// Default to production; an explicit NODE_ENV in the environment still wins.
+process.env.NODE_ENV ||= 'production';
 
 const express = require('express');
 const path = require('path');
@@ -46,7 +46,15 @@ app.use((req, res, next) => {
   if (!req.path.toLowerCase().endsWith('.png')) return next();
   if (!req.headers.accept?.includes('image/webp')) return next();
 
-  const png = path.join(PUBLIC_DIR, req.path);
+  // req.path is still percent-encoded; without decoding, a PNG with a space in
+  // its name never finds its twin and silently ships the PNG.
+  let rel;
+  try {
+    rel = decodeURIComponent(req.path);
+  } catch {
+    return next(); // malformed escape — let static deal with it
+  }
+  const png = path.join(PUBLIC_DIR, rel);
   if (!png.startsWith(PUBLIC_DIR + path.sep)) return next(); // ../ escapes
   const webp = png.replace(/\.png$/i, '.webp');
 
@@ -74,9 +82,13 @@ app.get('/api/stats', (req, res) => {
 // whole job of adding a cape.
 // ponytail: x-forwarded-proto because Cloudflare terminates TLS and the client
 // is HttpURLConnection, which won't follow the http→https redirect — it sees
-// the 301, gives up, and no cape loads.
+// the 301, gives up, and no cape loads. SITE_ORIGIN pins the host when set,
+// since the Host header these URLs are otherwise built from is the client's to
+// choose — set it in production and the mod can't be pointed elsewhere.
 app.get('/cape/index', (req, res) => {
-  const base = `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`;
+  const base =
+    process.env.SITE_ORIGIN ||
+    `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`;
   let files = [];
   try {
     files = fs.readdirSync(path.join(PUBLIC_DIR, 'cape')).filter((f) => f.endsWith('.webp'));
@@ -87,26 +99,46 @@ app.get('/cape/index', (req, res) => {
 // Serve all static files from the 'public' folder.
 // No Cache-Control of our own, so Cloudflare caches at its own defaults and the
 // traffic stays off this box. The cost is that a changed thm.css or thm.js can
-// be served stale — bump the `?v=` on the script tags when you change them, and
-// purge the CDN for CSS, which has no version query.
+// be served stale — bump the `?v=` on the thm.css and thm.js links when you
+// change them, and no CDN purge is needed.
 app.use(express.static(PUBLIC_DIR));
 
-// Initialize server with retry on EADDRINUSE
-function startServer(port, attempt = 1, maxAttempts = 5, delayMs = 1000) {
-  const server = app.listen(port, () => {
-    console.log(`THM Website running on http://localhost:${port}`);
-  });
+// Bind retry. Do not remove: 3002 comes back EADDRINUSE for a few seconds after
+// a restart even when nothing is listening on it — the previous process still
+// holds the socket while its keep-alive connections drain, so `ss` shows the
+// port free while `bind()` still refuses. Dying here doesn't help, because the
+// supervisor's own restart lands in the same window. Five attempts, 1s doubling
+// to 16s, then give up loudly.
+function listen(attempt = 1, wait = 1000, maxAttempts = 5) {
+  const server = app.listen(PORT);
 
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE' && attempt < maxAttempts) {
-      console.warn(`Port ${port} in use, retrying in ${delayMs}ms... (attempt ${attempt}/${maxAttempts})`);
-      setTimeout(() => startServer(port, attempt + 1, maxAttempts, delayMs * 2), delayMs);
-    } else {
-      console.error(`Failed to bind port ${port} after ${attempt} attempt(s):`, err.message);
+  // 'listening', not app.listen's callback: Express 5 treats a trailing function
+  // as a node-style callback and also registers it for 'error', so the old
+  // success line printed on every failed bind too. This event only fires when
+  // the port is actually ours.
+  server.once('listening', () =>
+    console.log(`THM Website running on http://localhost:${PORT}`)
+  );
+
+  server.once('error', (err) => {
+    if (err.code !== 'EADDRINUSE' || attempt >= maxAttempts) {
+      console.error(`Failed to bind port ${PORT} after ${attempt} attempt(s):`, err.message);
       process.exit(1);
     }
+    console.warn(`Port ${PORT} in use, retrying in ${wait}ms... (attempt ${attempt}/${maxAttempts})`);
+    setTimeout(() => listen(attempt + 1, wait * 2, maxAttempts), wait);
   });
+
+  // The other half of the same problem: release the port on the way out instead
+  // of leaving the next boot to retry through the drain window. Without
+  // closeAllConnections an idle keep-alive from Cloudflare holds it open.
+  for (const sig of ['SIGTERM', 'SIGINT']) {
+    process.once(sig, () => {
+      server.closeAllConnections();
+      server.close(() => process.exit(0));
+    });
+  }
 }
 
 convertPngs();
-startServer(PORT);
+listen();

@@ -6,7 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 node server.js        # Start the server (port 3002)
-npm install           # Install dependencies (express, basic-auth)
+npm install           # Install dependencies (express)
+
+# SITE_ORIGIN pins the origin /cape/index builds its URLs from. Unset, it falls
+# back to the request's Host header — fine locally, worth setting in production.
+SITE_ORIGIN=https://highwaymen.cc node server.js
 ```
 
 No build step, no bundler, no test suite.
@@ -33,13 +37,28 @@ endpoint that reads `public/stats.json` with `Cache-Control: no-store` so
 Cloudflare can't cache it, `GET /cape/index`, and PNG→WebP. It retries on
 `EADDRINUSE` up to 5 times with exponential backoff.
 
+**Keep the bind retry.** 3002 comes back `EADDRINUSE` for a few seconds after a
+restart *even when nothing is listening on it* — the previous process still holds
+the socket while its keep-alive connections drain, so `ss` reports the port free
+while `bind()` still refuses. Crashing instead doesn't help: the supervisor's own
+restart lands in the same window. A `SIGTERM`/`SIGINT` handler closes the server
+and its live connections on the way out, which shortens that window from the
+other side, but does not remove it.
+
+The success line hangs off `server.once('listening')`, not `app.listen`'s
+callback: Express 5 treats a trailing function as a node-style callback and
+registers it for `'error'` as well (`application.js:598`), so passing one there
+prints "running" on every *failed* bind too.
+
 `GET /cape/index` is the cape index for the THM-Addons mod (its `CapeManager`
 fetches it as `api.capeIndex`). It answers `{"capes":[{"id","url"}]}`, one entry
 per `.webp` in `public/cape/`, `id` being the filename without the extension —
 the mod saves each download as `<id>.webp`. Adding a cape is dropping a `.webp`
-in that directory; nothing else to edit. The `url` is absolute and built from
-`x-forwarded-proto`, since the client is a Java `HttpURLConnection` that won't
-follow Cloudflare's http→https redirect.
+in that directory; nothing else to edit. The `url` is absolute: `SITE_ORIGIN`
+when set, otherwise `x-forwarded-proto` + the request's `Host`. The scheme has to
+come from the header because the client is a Java `HttpURLConnection` that won't
+follow Cloudflare's http→https redirect; the origin is worth pinning because
+`Host` is the client's to choose.
 
 PNG→WebP: on boot, every `.png` under `public/` gets a lossless `.webp` twin via
 system **ffmpeg** (`-c:v libwebp`), skipped when the twin is already newer than
@@ -51,6 +70,9 @@ missing the conversion warns and the PNG is served as-is.
 `stats.json` and `map-meta.json` are written by something outside this repo. If
 either fetch fails the page degrades quietly (the plate keeps its `—`
 placeholders).
+
+The only dependency is `express`. Nothing here needs an image library (ffmpeg
+does that) or an auth library — don't reintroduce one for a job a few lines do.
 
 ## Frontend conventions
 
@@ -95,8 +117,12 @@ page missing any one of them flashes:
    front of first paint, which is the thing being fixed. `<meta
    name="color-scheme">` and `color-scheme` in `thm.css` back it up but cannot
    replace it: `"dark light"` resolves to **light** on a light desktop and paints
-   white even when the visitor picked the dark theme. The theme toggle sets the
-   same three properties, or the next swap paints the old theme for a frame.
+   white even when the visitor picked the dark theme. `applyTheme()` in `thm.js`
+   sets the same three properties — on load and on toggle, or the next swap
+   paints the old theme for a frame — plus the two `theme-color` metas, which the
+   head script leaves alone because browser chrome is not paint-critical. Both
+   metas get the same value, so whichever `media` matches answers correctly and a
+   manual choice beats the system one.
 2. `@view-transition { navigation: auto; }` in `thm.css`, **at top level**, once.
    Not inside `@media` — the opt-in is unreliable there. Reduced motion is
    handled by killing `animation` on `::view-transition-old/new/group(*)`, which
@@ -104,7 +130,10 @@ page missing any one of them flashes:
 3. Speculation rules — one document rule per page, `href_matches: "/*"` at
    `"eagerness": "eager"`, plus plain `<link rel="prefetch">`. Both now serve the
    router's `fetch()` out of cache, and cover hard loads (typed URL, middle
-   click, no JS). Nothing to maintain when a page is added.
+   click, no JS). The document rule needs nothing when a page is added; the
+   `<link rel="prefetch">` list on the landing page is the Firefox fallback and
+   **does** want a line per new profile — one uncached click there if you skip
+   it, nothing worse.
 
 When adding or editing a page, copy an existing `<head>` **whole**, and add no
 script tags beyond `/js/thm.js`. Diff against a working page before finishing.
@@ -146,7 +175,9 @@ components as the landing page — `.head`, `.h2`, `.prose`, `.plate`, `.facts`,
 
 When adding a player, copy any existing profile — they are all built from one
 template. Keep the font `<link>`, the pre-paint theme script, and
-`/js/thm.js?v=8`, which is the page's only script tag.
+`/js/thm.js?v=9`, which is the page's only script tag. `thm.css` and `thm.js`
+both carry a `?v=`; bump both when you change either, since Cloudflare caches
+them at its own defaults and there is no purge step.
 
 The skin viewer is `public/js/skin.js`, shared by every profile and configured
 from the canvas element, so there is no per-page copy of it. Nothing loads it

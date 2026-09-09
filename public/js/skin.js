@@ -236,30 +236,44 @@ window.thmSkin = function () {
   );
 
   // ─── Interaction ───────────────────────────────────────────────────────────
+  // Drag continues outside the canvas, so mousemove/up and their touch twins go
+  // on window — which means they outlive the canvas the router swaps away. One
+  // AbortController takes every listener down with the render loop; without it
+  // each profile visited leaves four dead handlers firing on every mouse move,
+  // holding a disposed renderer alive.
+  //
+  // Everything goes through on(), so the signal can't be forgotten by whoever
+  // adds the next listener — that omission is silent, and this is the file it
+  // would leak from.
+  const ctrl = new AbortController();
+  const on = (el, ev, fn, opts) => el.addEventListener(ev, fn, { ...opts, signal: ctrl.signal });
+
   let drag = false, px = 0, py = 0;
   let rotY = 0.5, rotX = 0.15;
   let tY = rotY, tX = rotX;
   let autoSpin = true;
 
-  canvas.addEventListener('mousedown',  e => { drag = true;  px = e.clientX; py = e.clientY; autoSpin = false; });
-  window .addEventListener('mouseup',   () => { drag = false; });
-  window .addEventListener('mousemove', e => {
+  const grab = (x, y) => { drag = true; px = x; py = y; autoSpin = false; };
+  const turn = (x, y) => {
     if (!drag) return;
-    tY += (e.clientX - px) * 0.013; px = e.clientX;
-    tX += (e.clientY - py) * 0.013; py = e.clientY;
+    tY += (x - px) * 0.013; px = x;
+    tX += (y - py) * 0.013; py = y;
     tX = Math.max(-1.0, Math.min(1.0, tX));
-  });
-  canvas.addEventListener('touchstart', e => { drag = true;  px = e.touches[0].clientX; py = e.touches[0].clientY; autoSpin = false; e.preventDefault(); }, { passive: false });
-  window .addEventListener('touchend',  () => { drag = false; });
-  window .addEventListener('touchmove', e => {
-    if (!drag) return;
-    tY += (e.touches[0].clientX - px) * 0.013; px = e.touches[0].clientX;
-    tX += (e.touches[0].clientY - py) * 0.013; py = e.touches[0].clientY;
-    tX = Math.max(-1.0, Math.min(1.0, tX));
-  });
-  canvas.addEventListener('wheel', e => {
-    camera.position.z = Math.max(24, Math.min(72, camera.position.z + e.deltaY * 0.06));
-  }, { passive: true });
+  };
+
+  on(canvas, 'mousedown',  e => grab(e.clientX, e.clientY));
+  on(window, 'mouseup',    () => { drag = false; });
+  on(window, 'mousemove',  e => turn(e.clientX, e.clientY));
+  // Not passive: a drag on the canvas must not also scroll the page under it.
+  on(canvas, 'touchstart', e => {
+    grab(e.touches[0].clientX, e.touches[0].clientY);
+    e.preventDefault();
+  }, { passive: false });
+  on(window, 'touchend',   () => { drag = false; });
+  on(window, 'touchmove',  e => turn(e.touches[0].clientX, e.touches[0].clientY));
+  // ponytail: no wheel-zoom. It sat in a sticky plate the cursor crosses on
+  // every scroll — passive, it zoomed and scrolled at once; non-passive, it
+  // trapped the scroll. Nothing to zoom into at 220x300 anyway. Drag rotates.
 
   // ─── Render loop ───────────────────────────────────────────────────────────
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -268,6 +282,7 @@ window.thmSkin = function () {
     // The router removes the canvas when you navigate away; without this the
     // loop and its WebGL context would outlive every page you visit.
     if (!canvas.isConnected) {
+      ctrl.abort();
       renderer.dispose();
       return;
     }

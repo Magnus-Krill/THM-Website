@@ -7,10 +7,13 @@
     <meta
       name="description"
       content="THM digs, paves and defends the Nether highways of 6b6t. Five blocks wide, from spawn to the world border." />
-    <meta name="theme-color" content="#0d0b0c" />
+    <!-- Mobile browser chrome follows the theme. The manual toggle can't be
+         reached from CSS, so thm.js rewrites these two on switch. -->
+    <meta name="theme-color" content="#0d0b0c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3efe8" media="(prefers-color-scheme: light)" />
     <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
     <meta name="color-scheme" content="dark light" />
-    <link rel="icon" type="image/png" href="/images/THM2-transparent.webp" />
+    <link rel="icon" type="image/webp" href="/images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
     <!-- Frame one: the right background with no stylesheet and no JS involved.
          Everything after this is a correction on top of it, never a
@@ -39,7 +42,7 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
       rel="stylesheet" />
-    <link rel="stylesheet" href="/css/thm.css" />
+    <link rel="stylesheet" href="/css/thm.css?v=9" />
     <!-- The roster is where people click next, so fetch those pages while idle. -->
     <link rel="prefetch" href="/players/Ryazor/" />
     <link rel="prefetch" href="/players/Kyr0zen/" />
@@ -748,6 +751,6 @@
       </div>
     </footer>
 
-    <script src="/js/thm.js?v=8"></script>
+    <script src="/js/thm.js?v=9"></script>
   </body>
 </html>

@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kyr0Zen · THM</title>
     <meta name="description" content="Kyr0Zen, co-owner of The Highway Men and the artist behind its logos and banners." />
-    <meta name="theme-color" content="#0d0b0c" />
+    <!-- Mobile browser chrome follows the theme. The manual toggle can't be
+         reached from CSS, so thm.js rewrites these two on switch. -->
+    <meta name="theme-color" content="#0d0b0c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3efe8" media="(prefers-color-scheme: light)" />
     <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
     <meta name="color-scheme" content="dark light" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="icon" type="image/png" href="../../images/THM2-transparent.webp" />
+    <link rel="icon" type="image/webp" href="../../images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="../../images/THM2-transparent.webp" />
     <!-- Frame one: the right background with no stylesheet and no JS involved.
          Everything after this is a correction on top of it. -->
@@ -36,7 +39,7 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
       rel="stylesheet" />
-    <link rel="stylesheet" href="/css/thm.css" />
+    <link rel="stylesheet" href="/css/thm.css?v=9" />
     <link rel="prefetch" href="/" />
     <!-- Every same-origin link (logo, crumb, nav's /#log, /#network …) fetched at
          load, not at idle. The link above covers Firefox. -->
@@ -287,6 +290,6 @@
 
     <!-- three.js and skin.js are loaded by thm.js when a #skin-canvas is on the
          page — script tags in router-swapped markup never execute. -->
-    <script src="/js/thm.js?v=8"></script>
+    <script src="/js/thm.js?v=9"></script>
   </body>
 </html>
