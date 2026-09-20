@@ -67,6 +67,13 @@ sends `Accept: image/webp` and the twin is smaller, `Vary: Accept` set. No image
 library in the dependencies; a new PNG converts on the next restart. If ffmpeg is
 missing the conversion warns and the PNG is served as-is.
 
+`public/cape/` is the exception: it is `fs.watch`ed, and a `.png` landing there is
+converted (same ffmpeg call, async, after a 2 s settle so a half-written upload
+isn't read) and the **PNG deleted** once the `.webp` exists — the index lists only
+`.webp`, so a cape PNG is dead weight. PNGs dropped in while the server was down
+convert at boot; a failed encode keeps the PNG. The boot twin scan skips that
+directory so the two never write the same file.
+
 `stats.json` and `map-meta.json` are written by something outside this repo. If
 either fetch fails the page degrades quietly (the plate keeps its `—`
 placeholders).

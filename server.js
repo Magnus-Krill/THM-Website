@@ -4,7 +4,7 @@ process.env.NODE_ENV ||= 'production';
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { spawnSync } = require('child_process');
+const { spawnSync, execFile } = require('child_process');
 const app = express();
 
 // Configuration constants
@@ -20,7 +20,8 @@ const STATS_FILE = path.join(PUBLIC_DIR, 'stats.json');
 function findPngs(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return findPngs(full);
+    // public/cape/ is watchCapes' job, which deletes the PNG instead of keeping a twin.
+    if (entry.isDirectory()) return full === CAPE_DIR ? [] : findPngs(full);
     return entry.isFile() && entry.name.toLowerCase().endsWith('.png') ? [full] : [];
   });
 }
@@ -40,6 +41,42 @@ function convertPngs() {
     if (r.status === 0) console.log(`webp: ${rel} converted`);
     else console.warn(`webp: ${rel} not converted, serving the PNG —`, r.error?.message || r.stderr?.toString().trim());
   }
+}
+
+// ── New capes ────────────────────────────────────────────────────────────────
+// public/cape/ is watched: a .png dropped in becomes a lossless .webp and the
+// .png is deleted, so /cape/index lists it with no restart. The index only reads
+// .webp, so a cape PNG is dead weight — unlike the twins above, it goes.
+// The settle delay lets an upload finish writing before ffmpeg reads it.
+const CAPE_DIR = path.join(PUBLIC_DIR, 'cape');
+const CAPE_SETTLE_MS = 2000;
+const capeTimers = new Map();
+
+function convertCape(png) {
+  const name = path.basename(png);
+  const webp = png.replace(/\.png$/i, '.webp');
+  execFile('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-c:v', 'libwebp', '-lossless', '1', webp], (err, _out, stderr) => {
+    // Delete only once the webp really exists — a failed encode keeps the PNG.
+    let ok = !err;
+    try { ok = ok && fs.statSync(webp).size > 0; } catch { ok = false; }
+    if (!ok) return console.warn(`cape: ${name} not converted, PNG kept —`, err?.message || stderr.trim());
+    fs.rm(png, { force: true }, () => console.log(`cape: ${name} -> ${path.basename(webp)}, PNG deleted`));
+  });
+}
+
+function watchCapes() {
+  let pngs;
+  try { pngs = fs.readdirSync(CAPE_DIR).filter((f) => /\.png$/i.test(f)); } catch { return; }
+  pngs.forEach((f) => convertCape(path.join(CAPE_DIR, f))); // dropped in while the server was down
+  fs.watch(CAPE_DIR, (_event, name) => {
+    if (!name || !/\.png$/i.test(name)) return;
+    clearTimeout(capeTimers.get(name));
+    capeTimers.set(name, setTimeout(() => {
+      capeTimers.delete(name);
+      const png = path.join(CAPE_DIR, name);
+      if (fs.existsSync(png)) convertCape(png);
+    }, CAPE_SETTLE_MS));
+  }).on('error', (e) => console.warn('cape: watcher stopped —', e.message));
 }
 
 app.use((req, res, next) => {
@@ -141,4 +178,5 @@ function listen(attempt = 1, wait = 1000, maxAttempts = 5) {
 }
 
 convertPngs();
+watchCapes();
 listen();
