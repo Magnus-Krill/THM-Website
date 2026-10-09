@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cape/
+
+Sitemap: https://highwaymen.cc/sitemap.xml

@@ -5,12 +5,61 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { spawnSync, execFile } = require('child_process');
+const { createHash } = require('crypto');
+const compression = require('compression');
 const app = express();
 
 // Configuration constants
-const PORT = 3002;
+const PORT = Number(process.env.PORT || 3002);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATS_FILE = path.join(PUBLIC_DIR, 'stats.json');
+const SITE_ORIGIN = new URL(process.env.SITE_ORIGIN || 'https://highwaymen.cc').origin;
+if (!/^https?:\/\//.test(SITE_ORIGIN)) throw new Error('SITE_ORIGIN must use HTTP or HTTPS');
+
+const inlineScripts = new Set();
+for (const file of fs.readdirSync(PUBLIC_DIR, { recursive: true }).filter(file => path.basename(file) === 'index.html').map(file => path.join(PUBLIC_DIR, file))) {
+  for (const match of fs.readFileSync(file, 'utf8').matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+    if (match[1]) inlineScripts.add(`'sha256-${createHash('sha256').update(match[1]).digest('base64')}'`);
+  }
+}
+const csp = [
+  "default-src 'self'", `script-src 'self' ${[...inlineScripts].join(' ')} 'inline-speculation-rules'`,
+  "style-src 'self'", "style-src-attr 'unsafe-inline'", "font-src 'self'",
+  "img-src 'self' https://minotar.net data:", "connect-src 'self' https://minotar.net",
+  "object-src 'none'", "base-uri 'none'", "frame-ancestors 'none'", "form-action 'self'",
+].join('; ');
+app.disable('x-powered-by');
+app.use(compression({ level: 4, brotli: { params: { [require('zlib').constants.BROTLI_PARAM_QUALITY]: 4 } } }));
+app.use((_req, res, next) => {
+  res.set({
+    'Content-Security-Policy': csp,
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'X-Frame-Options': 'DENY',
+  });
+  next();
+});
+
+function staticHeaders(res, file) {
+  if (/\.(?:css|js|woff2)$/.test(file)) {
+    const version = new URL(res.req.originalUrl, SITE_ORIGIN).searchParams.get('v');
+    res.set('Cache-Control', version === '19' ? 'public, max-age=31536000, immutable' : 'public, max-age=3600');
+  } else if (/\.html$/.test(file)) {
+    res.set('Cache-Control', 'public, no-cache, max-age=0, must-revalidate');
+    res.set('Cloudflare-CDN-Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+  } else if (/\.(?:json|png|webp)$/.test(file) && /(?:stats|map-meta|highway-map)\./.test(file)) {
+    res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+    res.set('Cloudflare-CDN-Cache-Control', 'public, max-age=60');
+  } else {
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=60');
+  }
+}
+
+app.get(['/players/Leon_170709', '/players/Leon_170709/', '/players/Leon_170709/index.html'], (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.redirect(301, '/players/MagnusKrill/');
+});
 
 // ── PNG → WebP ───────────────────────────────────────────────────────────────
 // Every .png under public/ gets a .webp twin on boot, and .png requests are
@@ -95,9 +144,12 @@ app.use((req, res, next) => {
   if (!png.startsWith(PUBLIC_DIR + path.sep)) return next(); // ../ escapes
   const webp = png.replace(/\.png$/i, '.webp');
 
-  res.setHeader('Vary', 'Accept'); // so a cache can't hand the webp to a client that can't read it
+  res.vary('Accept');
   try {
-    if (fs.statSync(webp).size < fs.statSync(png).size) return res.sendFile(webp);
+    if (fs.statSync(webp).size < fs.statSync(png).size) {
+      staticHeaders(res, webp);
+      return res.sendFile(webp);
+    }
   } catch {}
   next();
 });
@@ -105,6 +157,7 @@ app.use((req, res, next) => {
 // Live stats endpoint — Cache-Control: no-store prevents Cloudflare from caching it
 app.get('/api/stats', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Cloudflare-CDN-Cache-Control', 'no-store');
   try {
     const stats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
     res.json(stats);
@@ -122,23 +175,28 @@ app.get('/api/stats', (req, res) => {
 // the 301, gives up, and no cape loads. SITE_ORIGIN pins the host when set,
 // since the Host header these URLs are otherwise built from is the client's to
 // choose — set it in production and the mod can't be pointed elsewhere.
-app.get('/cape/index', (req, res) => {
-  const base =
-    process.env.SITE_ORIGIN ||
-    `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`;
+app.get('/cape/index', (_req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
   let files = [];
   try {
     files = fs.readdirSync(path.join(PUBLIC_DIR, 'cape')).filter((f) => f.endsWith('.webp'));
   } catch {}
-  res.json({ capes: files.map((f) => ({ id: path.basename(f, '.webp'), url: `${base}/cape/${f}` })) });
+  res.json({ capes: files.map((f) => ({ id: path.basename(f, '.webp'), url: `${SITE_ORIGIN}/cape/${encodeURIComponent(f)}` })) });
 });
 
-// Serve all static files from the 'public' folder.
-// No Cache-Control of our own, so Cloudflare caches at its own defaults and the
-// traffic stays off this box. The cost is that a changed thm.css or thm.js can
-// be served stale — bump the `?v=` on the thm.css and thm.js links when you
-// change them, and no CDN purge is needed.
-app.use(express.static(PUBLIC_DIR));
+app.use(express.static(PUBLIC_DIR, { dotfiles: 'deny', setHeaders: staticHeaders }));
+app.use((_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  res.status(404).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Page not found · THM</title><link rel="stylesheet" href="/css/thm.css?v=19"><main class="wrap pf"><h1 class="h2">Page not found.</h1><p>The page may have moved.</p><a class="btn btn-signal" href="/">Go to the homepage</a></main></html>');
+});
+app.use((err, _req, res, _next) => {
+  const status = err.status === 400 ? 400 : 500;
+  res.set('Cache-Control', 'no-store');
+  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  res.status(status).type('text').send(status === 400 ? 'Bad request' : 'Website temporarily unavailable');
+});
 
 // Bind retry. Do not remove: 3002 comes back EADDRINUSE for a few seconds after
 // a restart even when nothing is listening on it — the previous process still
@@ -177,6 +235,9 @@ function listen(attempt = 1, wait = 1000, maxAttempts = 5) {
   }
 }
 
-convertPngs();
-watchCapes();
-listen();
+if (require.main === module) {
+  convertPngs();
+  watchCapes();
+  listen();
+}
+module.exports = app;

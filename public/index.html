@@ -1,717 +1,68 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Highway Men · Nether highways on 6b6t</title>
-    <meta
-      name="description"
-      content="THM digs, paves and defends the Nether highways of 6b6t. Five blocks wide, from spawn to the world border." />
-    <!-- Mobile browser chrome follows the theme. The manual toggle can't be
-         reached from CSS, so thm.js rewrites these two on switch. -->
-    <meta name="theme-color" content="#0d0b0c" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3efe8" media="(prefers-color-scheme: light)" />
-    <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
-    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Meet THM, the crew behind the five-wide Nether highways of 6b6t. Explore the network, our members and our achievements." />
+    <meta name="theme-color" content="#f3efe8" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="https://highwaymen.cc/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="The Highway Men" />
+    <meta property="og:title" content="The Highway Men · Nether highways on 6b6t" />
+    <meta property="og:description" content="Meet THM, the crew behind the five-wide Nether highways of 6b6t. Explore the network, our members and our achievements." />
+    <meta property="og:url" content="https://highwaymen.cc/" />
+    <meta property="og:image" content="https://highwaymen.cc/images/THM-Banner.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" href="/fonts/archivo.woff2?v=19" as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/webp" href="/images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
-    <!-- Frame one: the right background with no stylesheet and no JS involved.
-         Everything after this is a correction on top of it, never a
-         prerequisite. The meta above cannot do this job — "dark light" resolves
-         to light on a light desktop and paints white. -->
-    <style>
-      html { background: #0d0b0c; }
-      @media (prefers-color-scheme: light) { html { background: #f3efe8; } }
-    </style>
-    <script>
-      // Theme, colour-scheme and canvas colour before first paint. localStorage
-      // throws outright when Firefox is set to block storage, and an exception
-      // here left the whole page white, so it is caught.
-      (function () {
-        var t = null;
-        try { t = localStorage.getItem('thm-theme'); } catch (e) {}
-        t = t || (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
-        var r = document.documentElement;
-        r.dataset.theme = t;
-        r.style.colorScheme = t;
-        r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c';
-      })();
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
-      rel="stylesheet" />
-    <link rel="stylesheet" href="/css/thm.css?v=9" />
-    <!-- The roster is where people click next, so fetch those pages while idle. -->
-    <link rel="prefetch" href="/players/Ryazor/" />
-    <link rel="prefetch" href="/players/Kyr0zen/" />
-    <link rel="prefetch" href="/players/Leon_170709/" />
-    <link rel="prefetch" href="/players/mingailas/" />
-    <link rel="prefetch" href="/players/xm4nn/" />
-    <!-- Every same-origin link on the page, fetched at load rather than at idle,
-         so no click waits on the network. A document rule rather than a URL list
-         because the list missed anything with a #fragment. External links don't
-         match. The plain links above are the fallback for browsers without
-         speculation rules (Firefox). -->
-    <script type="speculationrules">
-      {
-        "prefetch": [
-          {
-            "source": "document",
-            "where": { "href_matches": "/*" },
-            "eagerness": "eager"
-          }
-        ]
-      }
-    </script>
-    <noscript
-      ><style>
-        .rv, .reveal { opacity: 1 !important; transform: none !important; }
-        .road { transform: none !important; }
-      </style></noscript
-    >
+    <script>(function(){var t;try{t=localStorage.getItem('thm-theme')}catch(e){}t=t==='dark'?'dark':'light';var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;r.style.background=t==='light'?'#f3efe8':'#0d0b0c'})();</script>
+    <link rel="stylesheet" href="/css/thm.css?v=19" />
   </head>
   <body>
-    <div class="bg" aria-hidden="true"></div>
-
-    <!-- ══ Nav ══════════════════════════════════════════════════════════ -->
+    <a class="skip-link" href="#content">Skip to content</a>
     <nav class="nav" aria-label="Main">
-      <a href="/" class="nav-logo" aria-label="The Highway Men, home">
-        <img src="/images/THM2-transparent.webp" alt="" width="22" height="22" decoding="async" />
-        <span>THM</span>
-      </a>
-
+      <a href="/" class="nav-logo" aria-label="The Highway Men, home"><img src="/images/THM2-transparent.webp" alt="" width="32" height="32" decoding="async" /><span>THM<span class="nav-wordmark">The Highway Men</span></span></a>
       <ul class="nav-links" id="nav-menu">
-        <li><a href="#about">Clan</a></li>
-        <li><a href="#log">Log</a></li>
-        <li><a href="#network">Network</a></li>
-        <li><a href="#standard">Standard</a></li>
-        <li><a href="#roster">Roster</a></li>
+        <li><a href="/" data-route>Home</a></li>
+        <li><a href="/network/" data-route>Network</a></li>
+        <li><a href="/players/" data-route>Players</a></li>
+        <li><a href="/achievements/" data-route>Achievements</a></li>
+        <li><a href="/about/" data-route>Story</a></li>
       </ul>
-
       <div class="nav-right">
-        <button class="theme-toggle" aria-label="Switch to light theme">
-          <span class="theme-toggle-knob" aria-hidden="true"></span>
-        </button>
-        <a
-          href="https://discord.gg/thm"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="nav-cta">Discord <span class="arw" aria-hidden="true">→</span></a>
-        <button
-          class="nav-burger"
-          aria-label="Open menu"
-          aria-expanded="false"
-          aria-controls="nav-menu">
-          <span></span><span></span><span></span>
-        </button>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark theme"><span aria-hidden="true">◐</span></button>
+        <a href="https://discord.gg/thm" target="_blank" rel="noopener noreferrer" class="nav-cta">Join Discord <span aria-hidden="true">↗</span></a>
+        <button class="nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
       </div>
     </nav>
-
-    <!-- ══ Hero ═════════════════════════════════════════════════════════ -->
-    <header class="hero">
-      <div class="wrap">
-        <p class="hero-eyebrow mono">
-          <b>6b6t</b> <span aria-hidden="true">/</span> Nether
-          <span aria-hidden="true">/</span> Crew since 19.10.2024
-        </p>
-
-        <h1 class="display">
-          The Highway
-          <span class="row">
-            Men
-            <i class="road" aria-hidden="true"></i>
-            <span class="road-label">3.75M &middot; border reached</span>
-          </span>
-        </h1>
-
-        <div class="hero-lower">
-          <div>
-            <p class="hero-thesis">
-              We dug the Nether highways of 6b6t and paved them in obsidian,
-              five blocks wide. Since <strong>8 May 2026</strong> every world
-              border and every corner of the Overworld can be reached on one.
-            </p>
-            <div class="hero-actions">
-              <a
-                href="https://discord.gg/thm"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-signal"
-                >Join the Discord <span class="arw" aria-hidden="true">→</span></a
-              >
-              <a href="#network" class="btn btn-line">See the network</a>
-            </div>
-          </div>
-
-          <!-- Survey plate: the live numbers, read like an instrument -->
-          <div class="plate">
-            <div class="plate-head">
-              <span class="mono-sm mono">Clan telemetry</span>
-              <span class="plate-live mono-sm mono"
-                >Updated <span id="stats-updated">—</span></span
-              >
-            </div>
-            <div class="plate-grid">
-              <div class="plate-cell">
-                <span class="num on" id="stat-discord">—</span>
-                <span class="k mono mono-sm">Discord members</span>
-              </div>
-              <div class="plate-cell">
-                <span class="num on" id="stat-blocks">—</span>
-                <span class="k mono mono-sm">Blocks placed / day</span>
-              </div>
-              <div class="plate-cell">
-                <span class="num" id="stat-members">—</span>
-                <span class="k mono mono-sm">Official members</span>
-              </div>
-              <div class="plate-cell">
-                <span class="num">3.75M</span>
-                <span class="k mono mono-sm">Blocks to the border</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <main id="content" tabindex="-1">
+    <header class="wrap home-hero">
+      <div class="hero-copy">
+        <p class="kicker"><span class="status-dot" aria-hidden="true"></span> Building on 6b6t since 2024</p>
+        <h1>The Highway<br />Men<span class="accent">.</span></h1>
+        <p class="hero-thesis">A crew. A pickaxe. A way through.</p>
+        <p class="hero-description">We build and maintain the Nether highways of 6b6t. Five blocks wide, all the way to the world border.</p>
+        <div class="hero-actions"><a href="/network/" class="btn btn-signal">Explore the highways <span aria-hidden="true">→</span></a><a href="/players/" class="text-link">Meet the crew ↗</a></div>
       </div>
-
-      <hr class="seam" />
+      <figure class="hero-art"><img src="/players/Kyr0zen/art/THM_banner_2026.webp" data-fullimage="/images/THM-Banner.webp" alt="Six THM members walking together, with their crowned owner at the front" width="1200" height="675" fetchpriority="high" decoding="async" /><figcaption><span>The people behind the roads</span><a href="/players/">Meet THM <span aria-hidden="true">↗</span></a></figcaption></figure>
     </header>
-
-    <!-- ══ Clan ═════════════════════════════════════════════════════════ -->
-    <section id="about" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">The clan</span>
-          <span class="meta mono mono-sm">Founded 19 Oct 2024 · 6b6t</span>
-        </div>
-
-        <div class="record">
-          <div class="rv">
-            <img
-              src="/images/THM2-transparent.webp"
-              alt="The Highway Men clan mark"
-              class="mark"
-              width="84"
-              height="84"
-              loading="lazy"
-              decoding="async" />
-            <dl class="facts">
-              <div><dt>Founder</dt><dd>mingailas</dd></div>
-              <div><dt>First name</dt><dd>Moon</dd></div>
-              <div><dt>Owner</dt><dd>Ryazor, since 21 Mar 2026</dd></div>
-              <div><dt>Before</dt><dd>xm4nn_, then mingailas</dd></div>
-              <div><dt>Precursor</dt><dd>Highway Extension Group</dd></div>
-              <div><dt>Standard</dt><dd>5 wide, obsidian</dd></div>
-              <div><dt>Status</dt><dd>Active</dd></div>
-            </dl>
-          </div>
-
-          <div class="record-prose prose rv d1">
-            <h2 class="h2">Roads, not bases.</h2>
-            <p>
-              mingailas founded the clan on 19 October 2024 under the name
-              <em>Moon</em>. It was renamed inside a week, by which point
-              CapyKing10, CaT_345, Volizray and xm4nn_ were already in the Nether
-              and highway work had become the whole point.
-            </p>
-            <p>
-              The Highway Extension Group had just gone quiet, leaving 6b6t's
-              main axes half-finished. THM picked them up and kept digging, over
-              <strong>100,000 blocks a day</strong> at peak. In March 2025 THM
-              and The Watchmen agreed the five-wide standard, and the rest of the
-              server followed.
-            </p>
-            <p>
-              The clan has changed hands twice and kept working through both.
-              mingailas stepped down in August 2025; xm4nn_ moved up from
-              co-owner and held it until March 2026, then promoted
-              <strong>Ryazor</strong>. Under all three the axes kept moving
-              outward, and on 8 May 2026 the last of them reached the border.
-            </p>
-          </div>
-        </div>
-      </div>
+    <section class="wrap home-stats" aria-label="Clan activity">
+      <div><span class="num" id="stat-discord">—</span><span class="k">Discord members</span></div>
+      <div><span class="num" id="stat-blocks">—</span><span class="k">Blocks placed per day</span></div>
+      <div><span class="num" id="stat-members">—</span><span class="k">Official members</span></div>
+      <p class="stats-time">Activity updated<br /><span id="stats-updated">—</span></p>
     </section>
-
-    <!-- ══ Log ══════════════════════════════════════════════════════════ -->
-    <section id="log" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Log</span>
-          <span class="meta mono mono-sm">2024 &ndash; present · 11 entries</span>
-        </div>
-        <h2 class="h2 head-title rv">How it got built.</h2>
-
-        <div class="log">
-          <div class="log-rail" aria-hidden="true"></div>
-          <article class="log-row rv">
-            <p class="log-date">19 Oct 2024</p>
-            <div class="log-body">
-              <h3 class="h3">Founded as Moon</h3>
-              <p>
-                mingailas started the clan with CapyKing10, CaT_345, Volizray and xm4nn_.
-                The rename to The Highway Men came days later, once it was obvious
-                where the work was.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">Late 2024</p>
-            <div class="log-body">
-              <h3 class="h3">100K blocks a day</h3>
-              <p>
-                Crews concentrated on the Nether axes and cleared six figures of blocks
-                daily. THM became the de facto successor to the Highway Extension
-                Group.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">Mar 2025</p>
-            <div class="log-body">
-              <h3 class="h3">Five wide becomes the rule</h3>
-              <p>
-                THM and The Watchmen negotiated a single width for all main Nether
-                highways. It was unpopular for about a month, then it was just how
-                highways are built.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">21 Mar 2025</p>
-            <div class="log-body">
-              <h3 class="h3">The 12-hour dupe</h3>
-              <p>
-                Ooranges posted a video of a TNT duplication exploit the clan had been
-                keeping private. It was patched roughly twelve hours later, one of the
-                shortest-lived public dupes on the server.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">4 Aug 2025</p>
-            <div class="log-body">
-              <h3 class="h3">mingailas steps down</h3>
-              <p>
-                The founder left the clan and the community after serious allegations.
-                xm4nn_, until then co-owner and one of the first members, took over.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">27 Jan 2026</p>
-            <div class="log-body">
-              <h3 class="h3">Kitbot changes hands</h3>
-              <p>
-                Ooranges retired after building and running Kitbot since February 2025,
-                and handed the bot and all of its code to Leon_170709.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">30 Jan 2026</p>
-            <div class="log-body">
-              <h3 class="h3">The Meteor add-on ships</h3>
-              <p>
-                Leon_170709 released THM's own Meteor Client add-on. It splits the job
-                in two, digging five-wide tunnels or paving finished ones with
-                obsidian, so crews can divide the work and restock less often.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">2 Mar 2026</p>
-            <div class="log-body">
-              <h3 class="h3">Cardinals paved to the border</h3>
-              <p>
-                Every cardinal highway, north, south, east and west, was paved in
-                obsidian all the way out to the Overworld world border.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">21 Mar 2026</p>
-            <div class="log-body">
-              <h3 class="h3">Ryazor takes over</h3>
-              <p>
-                xm4nn_ retired for personal reasons and promoted Ryazor from co-owner to
-                owner before leaving.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">8 May 2026</p>
-            <div class="log-body">
-              <h3 class="h3">The last tunnel: 3.75M</h3>
-              <p>
-                South-east, the final remaining tunnel, was dug out to 3.75 million
-                blocks. Every world border and every world corner in the Overworld
-                can now be reached on a Nether highway.
-              </p>
-            </div>
-          </article>
-          <article class="log-row rv">
-            <p class="log-date">Ongoing</p>
-            <div class="log-body">
-              <h3 class="h3">Sabotage, and repair</h3>
-              <p>
-                The Highway Sabotage Collective walls off multi-thousand block stretches
-                for weeks at a time. Repair crews clear them and the highways stay
-                open.
-              </p>
-            </div>
-          </article>
-        </div>
+    <section class="band home-discover"><div class="wrap">
+      <div class="section-heading"><div><p class="kicker">More than a road</p><h2 class="h2">Built together. Still going.</h2></div><a href="/about/" class="text-link">Our story ↗</a></div>
+      <div class="discover-grid">
+        <a href="/network/" class="discover network-teaser"><div class="discover-image"><img src="/images/highway-map.webp" alt="The eight main axes of the THM Nether highway network" width="2800" height="2000" loading="lazy" decoding="async" /></div><div class="discover-copy"><span class="kicker">The network</span><h3>From spawn to the border.</h3><p>Eight axes. One five-wide standard. Find your route.</p><span class="text-link">Open the map →</span></div></a>
+        <a href="/achievements/" class="discover achievement-teaser"><div class="achievement-number" aria-hidden="true">8<span>/8</span><span class="achievement-check">✓</span></div><div class="discover-copy"><span class="kicker">Achievements</span><h3>Every direction. Completed.</h3><p>Highway milestones, a 33-million-block sky logo, and the people who made them happen.</p><span class="text-link">See the achievements →</span></div></a>
       </div>
-    </section>
-
-    <hr class="seam" />
-
-    <!-- ══ Network ══════════════════════════════════════════════════════ -->
-    <section id="network" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Network</span>
-          <span class="meta mono mono-sm">8 axes &middot; main and diagonal</span>
-        </div>
-
-        <div class="net">
-          <div class="net-text rv">
-            <h2 class="h2 head-title">The grid, as it stands.</h2>
-            <p class="lede">
-              Eight axes out of spawn &mdash; four cardinal, four diagonal &mdash;
-              all paved to the Overworld border.
-            </p>
-            <p class="net-note">
-              One grid square is three million blocks. The 3.75M marks are where
-              the Overworld border falls in Nether coordinates, which is where
-              every main axis ends.
-            </p>
-            <dl class="facts">
-              <div><dt>Cardinals paved</dt><dd>2 Mar 2026</dd></div>
-              <div><dt>Last tunnel</dt><dd>8 May 2026</dd></div>
-              <div><dt>Survey updated</dt><dd id="map-updated-time">n/a</dd></div>
-            </dl>
-          </div>
-
-          <figure class="map plate rv d1">
-            <div class="plate-head">
-              <span class="mono mono-sm">Nether survey</span>
-              <span class="mono mono-sm">6b6t</span>
-            </div>
-            <button class="map-open" type="button" aria-label="Enlarge the map">
-              <img
-                src="/images/highway-map.png"
-                alt="Map of the 6b6t Nether highway network maintained by THM"
-                width="2800"
-                height="2000"
-                loading="lazy"
-                decoding="async" />
-            </button>
-            <figcaption class="map-caption mono mono-sm">
-              Tap the map to enlarge
-            </figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-
-    <dialog class="zoom" id="map-zoom" aria-label="Nether highway map, enlarged">
-      <button class="zoom-close mono mono-sm" type="button">Close &times;</button>
-      <div class="zoom-scroll">
-        <img
-          src="/images/highway-map.png"
-          alt="Map of the 6b6t Nether highway network maintained by THM"
-          width="2800"
-          height="2000"
-          loading="lazy"
-          decoding="async" />
-      </div>
-    </dialog>
-
-    <!-- ══ Standard ═════════════════════════════════════════════════════ -->
-    <section id="standard" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Standard</span>
-          <span class="meta mono mono-sm">Adopted March 2025</span>
-        </div>
-
-        <div class="rv">
-          <h2 class="h2 head-title">Five blocks wide.</h2>
-          <p class="lede">
-            Negotiated with The Watchmen, then enforced on every main axis. Solid
-            obsidian, odd width, no exceptions.
-          </p>
-        </div>
-
-        <p class="lede spec-lede rv d1">Six reasons it stuck:</p>
-
-        <dl class="why rv">
-          <div class="why-row">
-            <dt>Cost</dt>
-            <dd>
-              Five blocks per unit length is cheaper than six, so the axes reach
-              the border sooner.
-            </dd>
-          </div>
-          <div class="why-row">
-            <dt>Repairable</dt>
-            <dd>
-              Harder to wall off than four wide, faster to clear than six when
-              someone does.
-            </dd>
-          </div>
-          <div class="why-row">
-            <dt>Navigation</dt>
-            <dd>
-              Wide enough to fly an elytra without clipping a wall, and for two
-              players to pass on foot.
-            </dd>
-          </div>
-          <div class="why-row">
-            <dt>Tooling</dt>
-            <dd>
-              Meteor's highway tools handle up to six wide, so five leaves
-              headroom for everyone.
-            </dd>
-          </div>
-          <div class="why-row">
-            <dt>Alignment</dt>
-            <dd>
-              Odd widths have a true centre block, which makes joining two
-              crews' work trivial.
-            </dd>
-          </div>
-          <div class="why-row">
-            <dt>Consistency</dt>
-            <dd>
-              One width across thousands of blocks. No renegotiating every time
-              a crew changes.
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </section>
-
-    <!-- ══ Tooling ══════════════════════════════════════════════════════ -->
-    <section class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Tooling</span>
-          <span class="meta mono mono-sm">Both written by members</span>
-        </div>
-
-        <div class="rv">
-          <h2 class="h2 head-title">We wrote our own.</h2>
-          <p class="lede">
-            Nobody hands out kits for a 3.75 million block dig. Two tools carry
-            the repetitive half of the work, and both came from inside the clan.
-          </p>
-        </div>
-
-        <div class="tools">
-          <article class="tool rv d1">
-            <header class="tool-head">
-              <img
-                src="/images/kitbot-icon.webp"
-                alt="Kitbot avatar"
-                width="76"
-                height="76"
-                loading="lazy"
-                decoding="async" />
-              <div>
-                <h3 class="h3">Kitbot</h3>
-                <p class="tool-kind mono mono-sm">Discord bot</p>
-              </div>
-            </header>
-            <p>
-              Hands out kits, teleports members to the working end of a highway
-              on demand, and tracks how far each axis has got.
-            </p>
-            <dl class="facts">
-              <div><dt>Built by</dt><dd>Ooranges</dd></div>
-              <div><dt>Maintained by</dt><dd>Leon_170709</dd></div>
-              <div><dt>Handed over</dt><dd>January 2026</dd></div>
-            </dl>
-          </article>
-
-          <article class="tool rv d2">
-            <header class="tool-head">
-              <img
-                src="/images/THM2-transparent.webp"
-                alt="THM clan mark"
-                class="tool-mark"
-                width="76"
-                height="76"
-                loading="lazy"
-                decoding="async" />
-              <div>
-                <h3 class="h3">THM Meteor add-on</h3>
-                <p class="tool-kind mono mono-sm">Meteor Client add-on</p>
-              </div>
-            </header>
-            <p>
-              Digs five-wide tunnels, or paves finished ones with obsidian.
-              Keeping the two jobs separate lets a crew split the work and
-              restock far less often.
-            </p>
-            <dl class="facts">
-              <div><dt>Written by</dt><dd>Leon_170709</dd></div>
-              <div><dt>Released</dt><dd>30 Jan 2026</dd></div>
-              <div><dt>Two jobs</dt><dd>Dig &middot; Pave</dd></div>
-            </dl>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ══ Alliances ════════════════════════════════════════════════════ -->
-    <section id="alliance" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Alliances</span>
-          <span class="meta mono mono-sm">9 allied &middot; 1 closed</span>
-        </div>
-        <h2 class="h2 head-title rv">Who we allied with.</h2>
-
-        <ul class="reg rv">
-          <li class="closed">
-            <span class="n">The Watchmen</span><span class="d">4 Aug 2025 &middot; closed</span>
-          </li>
-          <li><span class="n">The SpawnKeepers</span><span class="d">25 Dec 2025</span></li>
-          <li><span class="n">The Imperials</span><span class="d">4 Jan 2026</span></li>
-          <li><span class="n">TSR</span><span class="d">28 Mar 2026</span></li>
-          <li><span class="n">Dyselexia</span><span class="d">4 Apr 2026</span></li>
-          <li><span class="n">Saturn</span><span class="d">4 Apr 2026</span></li>
-          <li><span class="n">Lockdown Ops</span><span class="d">3 May 2026</span></li>
-          <li><span class="n">Cosmical</span><span class="d">31 May 2026</span></li>
-          <li><span class="n">Strata Crew</span><span class="d">3 Jun 2026</span></li>
-        </ul>
-
-        <div class="archive rv">
-          <div>
-            <h3 class="h2 archive-name">The Watchmen</h3>
-            <span class="archive-plate">Disbanded 5 Apr 2026</span>
-          </div>
-          <div class="prose">
-            <p>
-              beast_machine brought The Watchmen to 6b6t in early 2025 after years
-              on 2b2t. They were the first clan THM signed with, and the pair
-              settled the five-wide standard between them. After that they
-              out-built every group on the server except THM itself.
-            </p>
-            <p>
-              They ran giveaways at a scale nobody has matched since. The clan
-              closed on 5 April 2026; the highways they extended are still in use.
-            </p>
-            <div class="archive-tally">
-              <div>
-                <span class="num">23</span>
-                <span class="k">Member bases built</span>
-              </div>
-              <div>
-                <span class="num">20,000+</span>
-                <span class="k">Kits given away</span>
-              </div>
-              <div>
-                <span class="num">#2</span>
-                <span class="k">All-time highway output</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ══ Roster ═══════════════════════════════════════════════════════ -->
-    <section id="roster" class="band">
-      <div class="wrap">
-        <div class="head rv">
-          <span class="kicker mono">Roster</span>
-          <span class="meta mono mono-sm">4 leads &middot; 37 listed &middot; 2 former</span>
-        </div>
-        <h2 class="h2 head-title rv">Who's on the axes.</h2>
-      </div>
-
-      <figure class="crew rv">
-        <img
-          src="/images/THM-Banner.webp"
-          alt="Render of the six THM high ranks walking in line, the owner crowned"
-          width="7715"
-          height="4340"
-          loading="lazy"
-          decoding="async" />
-        <figcaption class="wrap mono mono-sm">
-          The high ranks, rendered by a member of the clan
-        </figcaption>
-      </figure>
-
-      <div class="wrap">
-        <div class="leads rv">
-          <a href="/players/Ryazor/" class="lead">
-            <span class="h3">Ryazor</span><span class="r">Lead</span>
-          </a>
-          <a href="/players/Kyr0zen/" class="lead">
-            <span class="h3">Kyr0zen</span><span class="r">Lead</span>
-          </a>
-          <a href="/players/Leon_170709/" class="lead">
-            <span class="h3">Leon_170709</span><span class="r">Lead</span>
-          </a>
-          <div class="lead">
-            <span class="h3">FantasticJB</span><span class="r">Lead</span>
-          </div>
-        </div>
-
-        <ul class="roster rv d1">
-          <li><span>Volizray</span></li>
-          <li><span>fainecio</span></li>
-          <li><span>particl3s</span></li>
-          <li><span>Quinnnn_n</span></li>
-          <li><span>Greenpyxl</span></li>
-          <li><span>Wide_cat</span></li>
-          <li><span>FloppaDude</span></li>
-          <li><span>Zitrone30</span></li>
-          <li><span>Ooranges</span></li>
-          <li><span>AlphaCrystal</span></li>
-          <li><span>Vladimir_Lem0n</span></li>
-          <li><span>Evrality</span></li>
-          <li><span>nintoaster1</span></li>
-          <li><span>D_Plex_Legend</span></li>
-          <li><span>_GoShKo_</span></li>
-          <li><span>NexLordMax</span></li>
-          <li><span>Zgladiscool</span></li>
-          <li><span>VeryHradName</span></li>
-          <li><span>Moosipall2</span></li>
-          <li><span>Hejky420</span></li>
-          <li><span>risabhpro</span></li>
-          <li><span>KudoBelle</span></li>
-          <li><span>Dazz005</span></li>
-          <li><span>aetherf</span></li>
-          <li><span>RescueRabbit</span></li>
-          <li><span>misakplak</span></li>
-          <li><span>qqzcw</span></li>
-          <li><span>x1no2</span></li>
-          <li><span>SloppiPapi00</span></li>
-          <li><span>Jetsjet</span></li>
-          <li><span>NotAPro1081</span></li>
-          <li><span>NatetheDawg</span></li>
-          <li><span>D4msss</span></li>
-          <li><a href="/players/mingailas/" class="former">mingailas</a></li>
-          <li><span>CapyKing10</span></li>
-          <li><span>CaT_345</span></li>
-          <li><a href="/players/xm4nn/" class="former">xm4nn_</a></li>
-        </ul>
-        <p class="roster-note mono mono-sm">
-          Named members only, unranked workers are not listed.
-          <span class="former">Greyed</span> = former member.
-        </p>
-      </div>
-    </section>
-
-    <!-- ══ Join ═════════════════════════════════════════════════════════ -->
-    <section class="band join">
+    </div></section>
+<section class="band join">
       <div class="wrap join-inner">
         <div>
           <h2 class="h2">Crews run daily.</h2>
@@ -729,28 +80,14 @@
         >
       </div>
     </section>
-
-    <!-- ══ Footer ═══════════════════════════════════════════════════════ -->
+    </main>
     <footer class="foot">
-      <div class="wrap">
-        <div class="foot-lines">
-          <p>6b6t · Minecraft anarchy · Est. 19 October 2024</p>
-          <p>
-            Leads <b>Ryazor</b> · <b>Kyr0zen</b> · <b>Leon_170709</b> ·
-            <b>FantasticJB</b>
-          </p>
-          <p>
-            History sourced from the
-            <a
-              href="https://6b.wiki/Wiki/The_Highway_Men"
-              target="_blank"
-              rel="noopener noreferrer">6b6t wiki</a>
-          </p>
-          <p class="foot-sig">All roads lead to THM</p>
-        </div>
+      <div class="wrap foot-lines">
+        <div><a class="foot-brand" href="/">The Highway Men</a><p>All roads lead to THM.</p><p>6b6t · Since 19 October 2024</p></div>
+        <div class="foot-links"><a href="/network/">Network</a><a href="/players/">Players</a><a href="/achievements/">Achievements</a><a href="/about/">Our story</a></div>
+        <p class="foot-credit">History and profiles adapted from the <a href="https://6b.wiki/Wiki/The_Highway_Men" target="_blank" rel="noopener noreferrer">6b6t wiki</a> (CC BY).</p>
       </div>
     </footer>
-
-    <script src="/js/thm.js?v=9"></script>
+    <script src="/js/thm.js?v=19" defer></script>
   </body>
 </html>

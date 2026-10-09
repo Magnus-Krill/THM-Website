@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Highway network · THM</title>
+    <meta name="description" content="Explore the THM Nether highway map and the five-block-wide standard on 6b6t." />
+    <meta name="theme-color" content="#f3efe8" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="https://highwaymen.cc/network/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="The Highway Men" />
+    <meta property="og:title" content="Highway network · THM" />
+    <meta property="og:description" content="Explore the THM Nether highway map and the five-block-wide standard on 6b6t." />
+    <meta property="og:url" content="https://highwaymen.cc/network/" />
+    <meta property="og:image" content="https://highwaymen.cc/images/THM-Banner.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" href="/fonts/archivo.woff2?v=19" as="font" type="font/woff2" crossorigin />
+    <link rel="icon" type="image/webp" href="/images/THM2-transparent.webp" />
+    <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
+    <script>(function(){var t;try{t=localStorage.getItem('thm-theme')}catch(e){}t=t==='dark'?'dark':'light';var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;r.style.background=t==='light'?'#f3efe8':'#0d0b0c'})();</script>
+    <link rel="stylesheet" href="/css/thm.css?v=19" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <nav class="nav" aria-label="Main">
+      <a href="/" class="nav-logo" aria-label="The Highway Men, home"><img src="/images/THM2-transparent.webp" alt="" width="32" height="32" decoding="async" /><span>THM<span class="nav-wordmark">The Highway Men</span></span></a>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="/" data-route>Home</a></li>
+        <li><a href="/network/" data-route>Network</a></li>
+        <li><a href="/players/" data-route>Players</a></li>
+        <li><a href="/achievements/" data-route>Achievements</a></li>
+        <li><a href="/about/" data-route>Story</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" type="button" aria-label="Switch to dark theme"><span aria-hidden="true">◐</span></button>
+        <a href="https://discord.gg/thm" target="_blank" rel="noopener noreferrer" class="nav-cta">Join Discord <span aria-hidden="true">↗</span></a>
+        <button class="nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
+      </div>
+    </nav>
+    <main id="content" tabindex="-1">
+<header class="wrap page-intro"><p class="kicker">The network</p><h1>A road in every direction.</h1><p class="lede">Eight main axes connect spawn to the world border. This is the network we built, and the standard we keep.</p></header><section id="network" class="band">
+      <div class="wrap">
+        <div class="head">
+          <span class="kicker mono">Network</span>
+          <span class="meta mono mono-sm">8 axes &middot; main and diagonal</span>
+        </div>
+
+        <div class="net">
+          <div class="net-text">
+            <h2 class="h2 head-title">The grid, as it stands.</h2>
+            <p class="lede">
+              Eight axes from spawn: four cardinal and four diagonal. All paved to
+              the Overworld border.
+            </p>
+            <p class="net-note">
+              One grid square is three million blocks. The 3.75M marks are where
+              the Overworld border falls in Nether coordinates, which is where
+              every main axis ends.
+            </p>
+            <dl class="facts">
+              <div><dt>Cardinals paved</dt><dd>2 Mar 2026</dd></div>
+              <div><dt>Last tunnel</dt><dd>8 May 2026</dd></div>
+              <div><dt>Survey updated</dt><dd id="map-updated-time">n/a</dd></div>
+            </dl>
+          </div>
+
+          <figure class="map plate">
+            <div class="plate-head">
+              <span class="mono mono-sm">Nether survey</span>
+              <span class="mono mono-sm">6b6t</span>
+            </div>
+            <button class="map-open" type="button" aria-label="Enlarge the map">
+              <img
+                src="/images/highway-map.webp"
+                alt="Map of the 6b6t Nether highway network maintained by THM"
+                width="2800"
+                height="2000"
+                loading="lazy"
+                decoding="async" />
+            </button>
+            <figcaption class="map-caption mono mono-sm">
+              Tap the map to enlarge
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section><dialog class="zoom" id="map-zoom" aria-label="Nether highway map, enlarged">
+      <button class="zoom-close mono mono-sm" type="button">Close &times;</button>
+      <div class="zoom-scroll">
+        <img
+          src="/images/highway-map.webp"
+          alt="Map of the 6b6t Nether highway network maintained by THM"
+          width="2800"
+          height="2000"
+          loading="lazy"
+          decoding="async" />
+      </div>
+    </dialog><section id="standard" class="band">
+      <div class="wrap">
+        <div class="head">
+          <span class="kicker mono">Standard</span>
+          <span class="meta mono mono-sm">Adopted March 2025</span>
+        </div>
+
+        <div >
+          <h2 class="h2 head-title">Five blocks wide.</h2>
+          <p class="lede">
+            Negotiated with The Watchmen, then enforced on every main axis. Solid
+            obsidian, odd width, no exceptions.
+          </p>
+        </div>
+
+        <p class="lede spec-lede">Six reasons it stuck:</p>
+
+        <dl class="why">
+          <div class="why-row">
+            <dt>Cost</dt>
+            <dd>
+              Five blocks per unit length is cheaper than six, so the axes reach
+              the border sooner.
+            </dd>
+          </div>
+          <div class="why-row">
+            <dt>Repairable</dt>
+            <dd>
+              Harder to wall off than four wide, faster to clear than six when
+              someone does.
+            </dd>
+          </div>
+          <div class="why-row">
+            <dt>Navigation</dt>
+            <dd>
+              Wide enough to fly an elytra without clipping a wall, and for two
+              players to pass on foot.
+            </dd>
+          </div>
+          <div class="why-row">
+            <dt>Tooling</dt>
+            <dd>
+              Meteor's highway tools handle up to six wide, so five leaves
+              headroom for everyone.
+            </dd>
+          </div>
+          <div class="why-row">
+            <dt>Alignment</dt>
+            <dd>
+              Odd widths have a true centre block, which makes joining two
+              crews' work trivial.
+            </dd>
+          </div>
+          <div class="why-row">
+            <dt>Consistency</dt>
+            <dd>
+              One width across thousands of blocks. No renegotiating every time
+              a crew changes.
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+    </main>
+    <footer class="foot">
+      <div class="wrap foot-lines">
+        <div><a class="foot-brand" href="/">The Highway Men</a><p>All roads lead to THM.</p><p>6b6t · Since 19 October 2024</p></div>
+        <div class="foot-links"><a href="/network/">Network</a><a href="/players/">Players</a><a href="/achievements/">Achievements</a><a href="/about/">Our story</a></div>
+        <p class="foot-credit">History and profiles adapted from the <a href="https://6b.wiki/Wiki/The_Highway_Men" target="_blank" rel="noopener noreferrer">6b6t wiki</a> (CC BY).</p>
+      </div>
+    </footer>
+    <script src="/js/thm.js?v=19" defer></script>
+  </body>
+</html>

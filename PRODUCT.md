@@ -1,33 +1,24 @@
-# THM Website · PRODUCT.md
+# THM Website
 
-## Register
-brand
+The public home of The Highway Men, the Nether highway crew on 6b6t. Visitors
+should quickly understand who THM is, find the highway map, explore member
+profiles and see what the clan has achieved.
 
-## Product
-The Highway Men (THM) clan landing page for 6b6t, an anarchic Minecraft server. Design IS the product — the page communicates identity, history, and authority to the Minecraft community. No transactions; pure impression.
+## Audience
 
-## Target users
-- Active and prospective 6b6t players who encounter THM in-game or via Discord
-- Community members checking clan history, roster, highway infrastructure
-- Server newcomers evaluating whether to join
+6b6t players, prospective members and community members checking routes or history.
 
-## Purpose
-Establish THM as the dominant highway infrastructure clan on 6b6t. Showcase the highway map, history timeline, clan roster, Kitbot tool, and the 5 Blocks Wide standard. Drive Discord joins.
+## Direction
 
-## Brand personality
-- **Infrastructure authority** — methodical, large-scale, permanent
-- **Anarchy-server edge** — raw, earned, unapologetic
-- **Community** — real people, real names, real history
+Cream and charcoal surfaces with orange accents, actual clan artwork and readable member records.
+Keep the homepage brief; network details, the roster, achievements and history
+have their own pages. Page sections use the full screen width, with modest edge margins.
+Avoid fake terrain, neon effects and long introductory walls of text.
 
-## Anti-references
-- Corporate SaaS landing pages (too clean, no personality)
-- Gaming clan sites with aggressive neon-on-black RGB aesthetics
-- Cozy/pastel gaming aesthetics (wrong register — this is an anarchy server)
+## Content
 
-## Design principles
-- Dark theme default (anarchy server context: low-light, terminal-adjacent)
-- Fire/lava palette anchored by `--fire: #e25c1c` — volcanic, earned, dangerous
-- Bricolage Grotesque display + Syne body + Space Mono labels
-- Glass surface treatment for interactive cards
-- Live stats from bot API (Discord members, daily blocks placed, official members)
-- Nether highway map updated every 24 hours from bot sync
+- Live Discord, highway activity and membership figures from the existing bot API.
+- The highway survey and the five-block-wide obsidian standard.
+- Full member records, rotating 3D skins and existing artwork portfolios.
+- Documented milestones with dates. Do not invent awards or current records.
+- A clear invitation to the clan Discord.

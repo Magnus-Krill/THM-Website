@@ -1,99 +1,51 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ryazor · THM</title>
     <meta name="description" content="Ryazor, owner of The Highway Men since March 2026." />
-    <!-- Mobile browser chrome follows the theme. The manual toggle can't be
-         reached from CSS, so thm.js rewrites these two on switch. -->
-    <meta name="theme-color" content="#0d0b0c" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3efe8" media="(prefers-color-scheme: light)" />
-    <!-- Paints a dark canvas from the first frame, before thm.css lands. -->
-    <meta name="color-scheme" content="dark light" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="icon" type="image/webp" href="../../images/THM2-transparent.webp" />
-    <link rel="apple-touch-icon" href="../../images/THM2-transparent.webp" />
-    <!-- Frame one: the right background with no stylesheet and no JS involved.
-         Everything after this is a correction on top of it. -->
-    <style>
-      html { background: #0d0b0c; }
-      @media (prefers-color-scheme: light) { html { background: #f3efe8; } }
-    </style>
-    <script>
-      // Theme, colour-scheme and canvas colour before first paint. localStorage
-      // throws outright when Firefox is set to block storage, and an exception
-      // here left the whole page white, so it is caught.
-      (function () {
-        var t = null;
-        try { t = localStorage.getItem('thm-theme'); } catch (e) {}
-        t = t || (matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark');
-        var r = document.documentElement;
-        r.dataset.theme = t;
-        r.style.colorScheme = t;
-        r.style.background = t === 'light' ? '#f3efe8' : '#0d0b0c';
-      })();
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap"
-      rel="stylesheet" />
-    <link rel="stylesheet" href="/css/thm.css?v=9" />
-    <link rel="prefetch" href="/" />
-    <!-- Every same-origin link (logo, crumb, nav's /#log, /#network …) fetched at
-         load, not at idle. The link above covers Firefox. -->
-    <script type="speculationrules">
-      {
-        "prefetch": [
-          { "source": "document", "where": { "href_matches": "/*" }, "eagerness": "eager" }
-        ]
-      }
-    </script>
-    <noscript
-      ><style>
-        .rv, .reveal { opacity: 1 !important; transform: none !important; }
-      </style></noscript
-    >
+    <meta name="theme-color" content="#f3efe8" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href="https://highwaymen.cc/players/Ryazor/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="The Highway Men" />
+    <meta property="og:title" content="Ryazor · THM" />
+    <meta property="og:description" content="Ryazor, owner of The Highway Men since March 2026." />
+    <meta property="og:url" content="https://highwaymen.cc/players/Ryazor/" />
+    <meta property="og:image" content="https://highwaymen.cc/images/THM-Banner.webp" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preload" href="/fonts/archivo.woff2?v=19" as="font" type="font/woff2" crossorigin />
+    <link rel="icon" type="image/webp" href="/images/THM2-transparent.webp" />
+    <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
+    <script>(function(){var t;try{t=localStorage.getItem('thm-theme')}catch(e){}t=t==='dark'?'dark':'light';var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;r.style.background=t==='light'?'#f3efe8':'#0d0b0c'})();</script>
+    <link rel="stylesheet" href="/css/thm.css?v=19" />
   </head>
   <body>
-    <div class="bg" aria-hidden="true"></div>
-
+    <a class="skip-link" href="#content">Skip to content</a>
     <nav class="nav" aria-label="Main">
-      <a href="../../" class="nav-logo" aria-label="The Highway Men, home">
-        <img src="../../images/THM2-transparent.webp" alt="" width="22" height="22" decoding="async" />
-        <span>THM</span>
-      </a>
+      <a href="/" class="nav-logo" aria-label="The Highway Men, home"><img src="/images/THM2-transparent.webp" alt="" width="32" height="32" decoding="async" /><span>THM<span class="nav-wordmark">The Highway Men</span></span></a>
       <ul class="nav-links" id="nav-menu">
-        <li><a href="../../#roster"><span aria-hidden="true">&larr;</span> Roster</a></li>
-        <li><a href="../../#log">Log</a></li>
-        <li><a href="../../#network">Network</a></li>
-        <li><a href="../../#standard">Standard</a></li>
+        <li><a href="/" data-route>Home</a></li>
+        <li><a href="/network/" data-route>Network</a></li>
+        <li><a href="/players/" data-route>Players</a></li>
+        <li><a href="/achievements/" data-route>Achievements</a></li>
+        <li><a href="/about/" data-route>Story</a></li>
       </ul>
       <div class="nav-right">
-        <button class="theme-toggle" aria-label="Switch to light theme">
-          <span class="theme-toggle-knob" aria-hidden="true"></span>
-        </button>
-        <a
-          href="https://discord.gg/thm"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="nav-cta">Discord <span class="arw" aria-hidden="true">&rarr;</span></a>
-        <button
-          class="nav-burger"
-          aria-label="Open menu"
-          aria-expanded="false"
-          aria-controls="nav-menu">
-          <span></span><span></span><span></span>
-        </button>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark theme"><span aria-hidden="true">◐</span></button>
+        <a href="https://discord.gg/thm" target="_blank" rel="noopener noreferrer" class="nav-cta">Join Discord <span aria-hidden="true">↗</span></a>
+        <button class="nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-menu"><span></span><span></span><span></span></button>
       </div>
     </nav>
+    <main id="content" tabindex="-1">
+
 
     <header class="wrap pf">
       <p class="pf-crumb mono mono-sm">
-        <a href="../../">THM</a>
+        <a href="/">THM</a>
         <span aria-hidden="true">/</span>
-        <a href="../../#roster">Roster</a>
+        <a href="/players/">Players</a>
         <span aria-hidden="true">/</span>
         <b>Ryazor</b>
       </p>
@@ -130,14 +82,16 @@
         <div class="plate pf-plate">
           <div class="plate-head">
             <span class="mono mono-sm">Skin</span>
-            <span class="mono mono-sm">Live from Minotar</span>
+            <span class="mono mono-sm">Minecraft skin</span>
           </div>
           <canvas
+            width="280" height="360" tabindex="0"
             id="skin-canvas"
             data-username="Ryazor"
-            data-slim="false"
+            data-slim="auto"
+            data-fallback="/players/Ryazor/skin-file.webp"
             aria-label="3D render of Ryazor's Minecraft skin"></canvas>
-          <p class="skin-hint mono mono-sm">Drag to rotate</p>
+          <div class="skin-controls"><button class="skin-spin" type="button" aria-pressed="true">Pause rotation</button><p class="skin-hint">Drag or use arrow keys</p></div>
           <dl class="facts">
             <div><dt>IGN</dt><dd>Ryazor</dd></div>
             <div><dt>Role</dt><dd>Owner</dd></div>
@@ -152,12 +106,12 @@
     <section class="band">
       <div class="wrap">
         <div class="pf-body">
-          <div class="head rv">
+          <div class="head">
             <span class="kicker mono">Background</span>
             <span class="meta mono mono-sm">Nov 2024 &ndash; present</span>
           </div>
-          <h2 class="h2 head-title rv">Co-owner in a month, owner in sixteen.</h2>
-          <div class="pf-prose prose rv d1">
+          <h2 class="h2 head-title">Co-owner in a month, owner in sixteen.</h2>
+          <div class="pf-prose prose">
             <p>Ryazor first joined 6b6t on 12 February 2024 and THM that November. He was made co-owner in December 2024 and held that seat through both of the clan&rsquo;s handovers, until xm4nn_ promoted him to owner on 21 March 2026.</p>
             <p>The clan&rsquo;s biggest non-highway build happened under him: the largest sky logo on 6b6t, <strong>33 million blocks</strong> as of 3 June 2026. Before THM he was one of the founding members of the Air Destroyers.</p>
           </div>
@@ -168,11 +122,11 @@
     <section class="band">
       <div class="wrap">
         <div class="pf-body">
-          <div class="head rv">
+          <div class="head">
             <span class="kicker mono">Record</span>
             <span class="meta mono mono-sm">3 entries</span>
           </div>
-          <dl class="why rv">
+          <dl class="why">
             <div class="why-row">
               <dt>Owner of THM</dt>
               <dd>Took over on 21 March 2026 after fifteen months as co-owner.</dd>
@@ -190,25 +144,15 @@
       </div>
     </section>
 
+
+    </main>
     <footer class="foot">
-      <div class="wrap">
-        <div class="foot-lines">
-          <p>6b6t &middot; Minecraft anarchy &middot; Est. 19 October 2024</p>
-          <p><a href="../../#roster">Back to the roster</a></p>
-          <p>
-            Profile adapted from the
-            <a
-              href="https://6b.wiki/Wiki/The_Highway_Men"
-              target="_blank"
-              rel="noopener noreferrer">6b6t wiki</a> (CC BY)
-          </p>
-          <p class="foot-sig">All roads lead to THM</p>
-        </div>
+      <div class="wrap foot-lines">
+        <div><a class="foot-brand" href="/">The Highway Men</a><p>All roads lead to THM.</p><p>6b6t · Since 19 October 2024</p></div>
+        <div class="foot-links"><a href="/network/">Network</a><a href="/players/">Players</a><a href="/achievements/">Achievements</a><a href="/about/">Our story</a></div>
+        <p class="foot-credit">History and profiles adapted from the <a href="https://6b.wiki/Wiki/The_Highway_Men" target="_blank" rel="noopener noreferrer">6b6t wiki</a> (CC BY).</p>
       </div>
     </footer>
-
-    <!-- three.js and skin.js are loaded by thm.js when a #skin-canvas is on the
-         page — script tags in router-swapped markup never execute. -->
-    <script src="/js/thm.js?v=9"></script>
+    <script src="/js/thm.js?v=19" defer></script>
   </body>
 </html>

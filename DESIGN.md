@@ -1,344 +1,45 @@
----
-name: The Highway Men
-description: The Nether highway clan on 6b6t. Five blocks wide, spawn to the world border.
-colors:
-  void:           "#0d0b0c"
-  basalt:         "#151214"
-  bone:           "#efe9e3"
-  ash:            "#a29a95"
-  ash-dim:        "#837b77"
-  rule:           "rgba(239, 233, 227, 0.09)"
-  rule-2:         "rgba(239, 233, 227, 0.19)"
-  signal:         "#ee6b1f"
-  signal-hi:      "#ff7d33"
-  signal-line:    "rgba(238, 107, 31, 0.45)"
-  signal-wash:    "rgba(238, 107, 31, 0.10)"
-  discord:        "#5865f2"
-  discord-hi:     "#4a56d8"
-  discord-ink:    "#8b95f6"
-  discord-line:   "rgba(88, 101, 242, 0.45)"
-  on-signal:      "#17100b"
-  on-signal-light: "#fff"
-  void-light:        "#f3efe8"
-  basalt-light:      "#e9e3d9"
-  bone-light:        "#1a1614"
-  ash-light:         "#57504b"
-  ash-dim-light:     "#6f6862"
-  rule-light:        "rgba(26, 22, 20, 0.13)"
-  rule-2-light:      "rgba(26, 22, 20, 0.26)"
-  signal-light:      "#b34305"
-  signal-hi-light:   "#932f00"
-  signal-line-light: "rgba(179, 67, 5, 0.45)"
-  signal-wash-light: "rgba(179, 67, 5, 0.06)"
-  discord-ink-light: "#3b45c9"
-typography:
-  display:
-    fontFamily: "'Archivo', system-ui, sans-serif"
-    fontSize:   "clamp(2.75rem, 9vw, 6.75rem)"
-    fontWeight: 800
-    fontStretch: "120%"
-    lineHeight: 0.85
-    letterSpacing: "-0.02em"
-  heading:
-    fontFamily: "'Archivo', system-ui, sans-serif"
-    fontSize:   "clamp(1.9rem, 4.2vw, 3.1rem)"
-    fontWeight: 700
-    fontStretch: "112%"
-    lineHeight: 0.96
-    letterSpacing: "-0.025em"
-  title:
-    fontFamily: "'Archivo', system-ui, sans-serif"
-    fontSize:   "1.05rem"
-    fontWeight: 700
-    fontStretch: "106%"
-    lineHeight: 1.25
-    letterSpacing: "0.005em"
-  numeral:
-    fontFamily: "'Archivo', system-ui, sans-serif"
-    fontSize:   "clamp(1.5rem, 3vw, 1.9rem)"
-    fontWeight: 700
-    fontStretch: "100%"
-    letterSpacing: "-0.03em"
-  body:
-    fontFamily: "'Newsreader', Georgia, serif"
-    fontSize:   "1.0625rem"
-    fontWeight: 400
-    lineHeight: 1.7
-  label:
-    fontFamily: "'IBM Plex Mono', ui-monospace, monospace"
-    fontSize:   "0.6875rem"
-    fontWeight: 500
-    letterSpacing: "0.15em"
-  label-sm:
-    fontFamily: "'IBM Plex Mono', ui-monospace, monospace"
-    fontSize:   "0.625rem"
-    fontWeight: 500
-    letterSpacing: "0.18em"
-rounded:
-  xs: "5px"
-  sm: "9px"
-  default: "14px"
-spacing:
-  s2: "0.5rem"
-  s3: "0.75rem"
-  s4: "1rem"
-  s5: "1.5rem"
-  s6: "2rem"
-  s7: "3rem"
-  s8: "4rem"
-  s9: "6rem"
-  section:       "clamp(3.5rem, 6.5vw, 5.5rem)"
-  container-max: "1400px"
-  container-pad: "clamp(1.25rem, 4vw, 3rem)"
-components:
-  btn-signal:
-    backgroundColor: "{colors.signal}"
-    textColor:       "{colors.on-signal}"
-    rounded:         "{rounded.sm}"
-    padding:         "0 1.5rem"
-  btn-signal-hover:
-    backgroundColor: "{colors.signal-hi}"
-    textColor:       "{colors.on-signal}"
-  btn-line:
-    borderColor: "{colors.rule-2}"
-    textColor:   "{colors.bone}"
-    rounded:     "{rounded.sm}"
-    padding:     "0 1.5rem"
-  plate:
-    backgroundColor: "{colors.basalt}"
-    borderColor:     "{colors.rule-2}"
-    rounded:         "{rounded.default}"
-  zoom:
-    backgroundColor: "{colors.basalt}"
-    borderColor:     "{colors.rule-2}"
-    rounded:         "{rounded.default}"
-  tool:
-    backgroundColor: "{colors.basalt}"
-    borderColor:     "{colors.rule}"
-    rounded:         "{rounded.default}"
-    padding:         "1.5rem"
-  pf-role-lead:
-    borderColor: "{colors.signal-line}"
-    textColor:   "{colors.signal}"
-    rounded:     "{rounded.xs}"
-  pf-role-dev:
-    borderColor: "{colors.discord-line}"
-    textColor:   "{colors.discord-ink}"
-    rounded:     "{rounded.xs}"
----
+# The Highway Men
 
-# Design System: The Highway Men (v3)
+A clan site built around real member artwork, readable records and a short
+homepage. Use the original cream, charcoal and orange palette; keep both theme choices.
+The Nether shader is retired. Use actual clan artwork and the highway survey.
 
-Implemented entirely in `public/css/thm.css`; behaviour in `public/js/thm.js`.
+## Palette and type
 
-> The machine-readable sidecar `.impeccable/design.json` still describes v2
-> (glass / Bricolage / fire-lava-coal) and needs regenerating.
+| Role | Light | Dark |
+| --- | --- | --- |
+| Ground | `#f3efe8` | `#0d0b0c` |
+| Surface | `#fffcf7` | `#151214` |
+| Text | `#1a1614` | `#efe9e3` |
+| Secondary | `#57504b` | `#a29a95` |
+| Accent | `#a23a03` | `#ee6b1f` |
 
-## The idea
+Use locally hosted Archivo with swap. Keep small and muted text at least 4.5:1
+against its actual surface. Prefer clear labels over terminal-style metadata.
 
-THM's one lasting contribution to 6b6t is a **standard**: main Nether highways
-are five blocks wide. So the site is built out of the vernacular of
-infrastructure documentation rather than of gaming clan pages: survey plates,
-mileposts, dimension lines, plan views, block grids, coordinate labels.
+## Pages
 
-Four rules the system holds to:
+- `/`: clan artwork, a brief introduction, live activity and two route previews.
+- `/network/`: highway map, completion dates and the five-wide standard.
+- `/players/`: one complete roster ordered by Kitbot’s configured rank hierarchy, with explicit profile availability and retired/former-owner labels.
+- `/players/<name>/`: member history, facts, portfolio and a 3D skin.
+- `/achievements/`: recorded highway and member milestones. Date historical claims.
+- `/about/`: clan history, timeline, member-built tools and alliances.
 
-1. **Signal orange is ink, never light.** It colours text, borders and small
-   fills. No glows, no coloured drop-shadows, no orange gradients.
-2. **The highway is drawn, not rendered.** THM paves five wide in obsidian with
-   nothing marked in the middle, and the page says so in hairlines and copy. An
-   earlier version filled the motif with an obsidian block texture; it read as
-   heavy and cheap next to the type, so it was cut. Line work only.
-3. **Surfaces are materials, not glass.** Two steps (`--void`, `--basalt`) plus
-   hairline rules. No `backdrop-filter` anywhere.
-4. **Round the chrome.** Panels, buttons and badges carry real radius; only the
-   hairline drawings have hard corners.
+Use the full viewport width with 48px desktop edge margins, 32px on smaller
+desktops and 20px on mobile. Keep readable prose under 70 characters. Preserve existing
+profile records and artwork. Skin stages reserve 280×360 pixels. Mobile pages
+keep the heading and introduction before detailed records and the skin stage.
 
-Dark is the default; light mode is a supported toggle, not the primary.
+## Motion and loading
 
-## The recurring device: the hairline
+Keep navigation and footer mounted. Replace only `main#content`, with a 140ms
+transition or an immediate swap for reduced motion. No late content reveals.
 
-There is no illustrated highway. Everything that would have been a graphic is a
-measured line instead:
+Load the main hero artwork eagerly; lazy-load below-fold images, skin code and
+map metadata. Reserve image dimensions. Offscreen sections use content visibility.
 
-| Where | Class | Role |
-|---|---|---|
-| Between sections | `hr.seam` | One full-bleed hairline |
-| Beside the wordmark | `.road` | A 1px line out of "MEN" to `3.75M · border reached`; draws itself on load |
-| Log | `.log-rail` | A 1px rule that fills `--signal` as you read, with a leader line off each date |
-
-## Colour
-
-Every text token clears WCAG AA (≥4.5:1) against its own theme's ground.
-
-| Token | Dark | Light | Use |
-|---|---|---|---|
-| `--void` | `#0d0b0c` | `#f3efe8` | Page ground |
-| `--basalt` | `#151214` | `#e9e3d9` | Raised surface: plate, zoom dialog, tool card, join band |
-| `--bone` | `#efe9e3` | `#1a1614` | Primary text |
-| `--ash` | `#a29a95` | `#57504b` | Body copy (7.1 / 6.9) |
-| `--ash-dim` | `#837b77` | `#6f6862` | Mono labels, meta, captions (4.7 / 4.8) |
-| `--rule` | white 9% | ink 13% | Hairlines, cell borders |
-| `--rule-2` | white 19% | ink 26% | Outer frames, button borders |
-| `--signal` | `#ee6b1f` | `#b34305` | Kickers, log dates, links, primary button (6.3 / 4.9) |
-| `--signal-hi` | `#ff7d33` | `#932f00` | Primary button hover only |
-| `--signal-line` | signal 45% | signal 45% | Leader badge border |
-| `--discord-ink` | `#8b95f6` | `#3b45c9` | Discord as text/border |
-
-`--discord` / `--discord-hi` are kept for a Discord-branded fill but nothing
-uses them: Discord blurple was the loudest thing on a warm page, so the CTAs
-are orange and blurple survives as nav ink only.
-
-## Type
-
-Three families, three jobs.
-
-| Role | Family | Setting |
-|---|---|---|
-| Display (`.display`) | **Archivo** 800 @ `wdth 120%` | `clamp(2.75rem, 9vw, 6.75rem)`, `lh 0.85`, uppercase |
-| Section head (`.h2`) | Archivo 700 @ `112%` | `clamp(1.9rem, 4.2vw, 3.1rem)`, `lh 0.96`, sentence case |
-| Sub-head (`.h3`) | Archivo 700 @ `106%` | `1.05rem` |
-| Numerals (`.num`) | Archivo 700 @ `100%` | `tabular-nums` |
-| Body | **Newsreader** 400/500 + italic | `1.0625rem`, `lh 1.7` |
-| Labels, data, nav (`.mono` / `.mono-sm`) | **IBM Plex Mono** 500 | `0.6875` / `0.625rem`, `ls 0.15–0.18em`, uppercase |
-
-Archivo is held at **expanded** widths — wide and stamped, like road signage,
-not the usual condensed display face. The serif body against it is deliberate:
-an editorial, on-the-record voice for a page that doubles as the clan's history.
-
-Google Fonts request (identical in `index.html` and every profile page):
-
-```
-Archivo:wdth,wght@100..125,400..800
-IBM+Plex+Mono:wght@400;500
-Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500
-```
-
-## Space, radius, motion
-
-- **Scale** (4px base): `--s2` 8 · `--s3` 12 · `--s4` 16 · `--s5` 24 · `--s6` 32
-  · `--s7` 48 · `--s8` 64 · `--s9` 96.
-- **Container**: `.wrap` 1400px. Every grid section reaches the full width;
-  reading measures are capped per component (62ch prose, 64ch log, 46ch reasons),
-  so widening the shell widens layouts and never widens a line of text. Two
-  things sit outside it on purpose: `hr.seam`, which is full-bleed, and `.crew`,
-  which is centred at half the viewport width.
-- **Section rhythm**: `.band { padding-block: clamp(3.5rem, 6.5vw, 5.5rem) }`.
-- **Radius**: `--r-xs` 5px (badges, chips), `--r-sm` 9px (buttons, controls),
-  `--r` 14px (panels, plates, frames, map).
-- **Ease**: `--ease: cubic-bezier(0.22, 0.9, 0.24, 1)`.
-
-Motion is rationed to five things:
-
-1. **One load sequence** in the hero — eyebrow, wordmark, then thesis and plate,
-   ending with `.road` drawing itself out toward the border (`@keyframes draw`).
-   Nothing else on the page animates on load.
-2. **`.rv` reveal** on scroll: 14px rise + fade, `.d1`–`.d3` stagger.
-3. **The log rail draws itself** against scroll position (`--fill`, set by JS
-   from the reading line at 60% viewport height), and each entry's date has a
-   leader line to the rail that turns `--signal` once the entry is seen.
-4. **Hover micro-interactions**: nav underline grows from the left, `.arw` nudges
-   4px, roster names shift 4px into signal.
-5. **Page navigation crossfades** — `@view-transition { navigation: auto; }` in
-   `thm.css`, so landing page ↔ profile never blanks. The default root crossfade,
-   no named elements. Every page prefetches its outgoing links at load, and its
-   pre-paint script sets the canvas to `--void`, so there is no white frame to
-   cross-fade over in the first place.
-
-`prefers-reduced-motion` collapses all of it: the rail is fully drawn, the stat
-counters print their final value, and the navigation crossfade drops to an
-instant swap (`animation: none` on the `::view-transition-*` pseudos — the
-opt-in itself stays declared).
-
-## Components
-
-- **`.btn`** — `.btn-signal` (solid orange, dark label) and `.btn-line`
-  (hairline border, orange on hover). No lift, no shadow. Optional `.arw`.
-- **`.head`** — kicker left, a **fact** right (`Founded 19 Oct 2024`,
-  `4 leads · 36 listed`, `Adopted March 2025`), hairline under. The right slot
-  always carries real information, never decoration.
-- **`.plate`** — a labelled panel: a `.plate-head` row of two mono facts over the
-  content. Used for the hero telemetry (a 2×2 grid of live numbers that counts up
-  once on load), the map figure, and the skin viewer on profiles.
-- **`.net` / `.map`** — Network is a 0.8fr / 1.2fr split: reading text and a
-  `.facts` table left, the map in a `.plate` right, one column under 900px. The
-  map's saturation is pulled to 82% so the imported magenta and cyan sit in the
-  page's palette instead of fighting it, and it comes back to full on hover.
-- **`.zoom`** — the enlarged map, a native `<dialog>`, so Esc, the focus trap and
-  the backdrop are the platform's job. Width is `min(2800px, 96vw, 131vh)` —
-  131vh is 94vh × the map's 1.4 aspect, so it fits whole on a wide screen. The
-  image holds a `min-width: 900px` floor and pans inside `.zoom-scroll`, so
-  "enlarge" still means something on a phone.
-- **`.facts`** — `<dl>` of clan facts, mono both sides, hairline rows.
-- **`.log`** — date column, rail, body. Mobile collapses the date above the title
-  and pulls the rail to the left edge by cancelling `--date-w`.
-- **`.why`** — the six reasons for the standard: `columns: 2`, ruled rows,
-  Archivo caps term over serif description. No cards.
-- **`.roster`** — `.leads` (4-up, hairline separated, filled square marker) then
-  `.roster` (`columns: 4`, mono, hairline rows).
-- **`.reg`** — the alliance register: name and the date it was signed, two ruled
-  columns, closed entries dropped to `--ash` with the date in `--signal`.
-- **`.archive`** — a closed record: heading in `--ash` rather than `--bone`, a
-  `DISBANDED` plate, a tally row. Past tense, visually.
-- **`.tools` / `.tool`** — two spec sheets side by side (one column under 820px).
-  Each is icon + name + kind over a `--rule-2` hairline, then the description,
-  then a `.facts` table of author and dates. `flex: 1` on the description makes
-  both tables land on the same line whatever the copy length. Hover lifts the
-  border `--rule` → `--rule-2`; nothing else moves.
-- **`.crew`** — the member-made render of the six high ranks at the head of the
-  Roster: **half width, centred, all four edges feathered** into the page. No
-  hairlines, they would fight the fade. It measures 26–34% of the viewport.
-  - Cropped to `aspect-ratio: 2.8` at `object-position: 50% 68%`. The six figures
-    occupy source rows 1312–3609 of 4340; 3.36 would be the tightest possible
-    crop, and 2.8 deliberately leaves ~230 rows of empty stage above the crown
-    and below the feet for the fade to land in.
-  - Fade stops: **4% on the sides**, 10% top and bottom. Figure 1 starts at 2% of
-    the source width and figure 6 ends at 98%, so a longer side ramp dissolves the
-    end figures — the crowned one included. Never widen it.
-  - Under 760px: full width and no crop (`aspect-ratio: auto`), because at half
-    width the six are unreadable and a taller crop cuts the outer two.
-  - `height: auto` is required — without it the `height` attribute wins and
-    `aspect-ratio` never applies.
-
-## Page order
-
-1. Hero — eyebrow, wordmark + road, thesis + CTAs, survey plate, `hr.seam`
-2. Clan — facts column hard left, serif prose hard right, the air between them
-3. Log — six milepost entries against the rail
-4. Network — reading text left, the map in a `.plate` right (`.net`); tap to enlarge
-5. Standard — prose, then six reasons in two columns
-6. Tooling — headline and lede, then Kitbot and the Meteor add-on as two spec sheets
-7. Alliances — the dated register, then The Watchmen as an archived record
-8. Roster — head, the half-width feathered `.crew` render, the four leads, the list
-9. Join — one line and one button
-10. Footer — text only: origin line, leads, source, sign-off
-
-## Copy
-
-Plain verbs, concrete nouns, no hype. "Roads, not bases." "Crews run daily.
-Bring a pickaxe." Numbers are real or absent; the map's own figures are cited
-rather than restated. Captions teach the reader how to read the thing above
-them. No em-dashes stacked in body copy.
-
-## Files
-
-| Path | Contents |
-|---|---|
-| `public/css/thm.css` | The whole system: tokens, roles, components, profile pages |
-| `public/index.html` | The page |
-| `public/js/thm.js` | Theme, menu, reveal, rail fill, counters, timestamps |
-| `public/players/<Name>/index.html` | Profiles; model new ones on `Leon_170709` |
-
-## Don't
-
-- Don't add `backdrop-filter`, glass fills, or coloured shadows. The v2 glass
-  system is gone on purpose.
-- Don't paint a centreline, lane marking or median on the highway. There isn't
-  one; THM paves five wide in plain obsidian.
-- Don't reintroduce a rendered or textured highway graphic. It was tried and cut.
-- Don't square off the chrome; the radii are deliberate.
-- Don't put a decorative section number, orb, or floating icon on the page;
-  structural devices must encode something true.
-- Don't fill a section with repeated identical cards — every section here has
-  its own layout, and that is the point.
-- Don't let a `.head` meta slot hold filler text.
+Skins rotate automatically while visible, with a pause control and pointer/arrow
+key rotation. Pause GPU work in hidden tabs and offscreen; reduced motion disables
+automatic rotation. Dispose renderer resources when navigating away. Preserve
+voxel outer layers, slim skins, legacy skins and local texture fallbacks.

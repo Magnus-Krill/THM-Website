@@ -1,412 +1,362 @@
-/* THM · highwaymen.cc — shared behaviour
-
-   Navigation is client-side: a same-origin click swaps <body> rather than
-   loading a document, so no browser ever blanks between pages — Firefox
-   included, where there are no view transitions to hide the gap.
-
-   That splits this file in two. Anything touching page content lives in
-   initPage(), which runs on load and again after every swap. Window-level
-   listeners are wired once, in initShell(). Nothing else may assume it runs
-   only once. */
+/* Shared shell, bounded page cache, and disposable page behaviour. */
 'use strict';
+(() => {
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const connection = navigator.connection;
+  const backgroundColors = { dark: '#0d0b0c', light: '#f3efe8' };
+  const pages = new Map();
+  const scripts = new Map();
+  const pageLimit = 8;
+  const pageLifetime = 60_000;
+  let pageController;
+  let pageCleanups = [];
+  let currentUrl = new URL(location.href);
+  let navigation = 0;
+  let transition;
+  let rail;
+  let prefetching = false;
+  let statsReading;
+  const format = new Intl.NumberFormat();
 
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// Every localStorage touch in this file is guarded: it throws when the browser
-// is set to block storage, and an exception at this point would take the router
-// down with it — leaving plain document loads, which is the bug being fixed.
-const stored = (k) => {
-  try {
-    return localStorage.getItem(k);
-  } catch {
-    return null;
+  function preference(key, value) {
+    try {
+      if (value === undefined) return localStorage.getItem(key);
+      localStorage.setItem(key, value);
+    } catch { /* Storage can be disabled. */ }
   }
-};
-const store = (k, v) => {
-  try {
-    localStorage.setItem(k, v);
-  } catch {
-    /* session-only theme, better than a dead page */
+
+  function applyTheme(theme) {
+    const value = theme === 'dark' ? 'dark' : 'light';
+    const root = document.documentElement;
+    root.dataset.theme = value;
+    root.style.colorScheme = value;
+    root.style.background = backgroundColors[value];
+    document.querySelectorAll('meta[name="theme-color"]').forEach(el => { el.content = backgroundColors[value]; });
+    document.querySelector('.theme-toggle')?.setAttribute('aria-label', `Switch to ${value === 'dark' ? 'light' : 'dark'} theme`);
   }
-};
 
-// The three properties the head script already set, plus the theme-color metas
-// it deliberately leaves alone — browser chrome is not paint-critical, and this
-// is the only place that has to know both colours. Both metas get the same
-// value, so whichever `media` matches answers correctly and a manual choice
-// beats the system one.
-const VOID = { light: '#f3efe8', dark: '#0d0b0c' };
-
-function applyTheme(t) {
-  const r = document.documentElement;
-  r.dataset.theme = t;
-  r.style.colorScheme = t;
-  r.style.background = VOID[t];
-  document.head
-    .querySelectorAll('meta[name="theme-color"]')
-    .forEach((m) => (m.content = VOID[t]));
-}
-
-// Applied again here for pages loaded without the head script, and because the
-// metas are not its job.
-applyTheme(
-  stored('thm-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-);
-
-// ─── Per-page state, rebuilt by initPage() ──────────────────────────────────
-let observers = [];
-let navEl = null;
-let rail = null;
-let currentPath = location.pathname;
-
-const track = (obs) => (observers.push(obs), obs);
-
-const fmt = new Intl.NumberFormat();
-const stamp = (iso) => {
-  const d = new Date(iso);
-  return isNaN(d)
-    ? null
-    : d.toLocaleString(undefined, {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-};
-
-// One rAF-throttled handler for the nav state and the rail centreline fill.
-// Registered once; reads the elements initPage() found.
-function onScroll() {
-  navEl?.classList.toggle('scrolled', scrollY > 24);
-
-  if (rail && !reduced) {
-    // Fill tracks how far the reading line (60% down the viewport) has
-    // travelled through the log.
-    const r = rail.getBoundingClientRect();
-    const read = innerHeight * 0.6 - r.top;
-    rail.style.setProperty('--fill', Math.min(1, Math.max(0, read / r.height)).toFixed(3));
+  function destination(input) {
+    const url = new URL(input, location.href);
+    const moved = { '#network': '/network/', '#standard': '/network/#standard', '#roster': '/players/', '#about': '/about/#about', '#log': '/about/#log', '#alliance': '/about/#alliance' };
+    if (url.origin === location.origin && url.pathname === '/' && moved[url.hash]) return new URL(moved[url.hash], url);
+    return url;
   }
-}
 
-// ─── Theme switch ───────────────────────────────────────────────────────────
-function themeToggle() {
-  document.querySelectorAll('.theme-toggle').forEach((btn) => {
-    const label = () =>
-      btn.setAttribute(
-        'aria-label',
-        `Switch to ${document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'} theme`
-      );
-    label();
-    btn.addEventListener('click', () => {
-      // applyTheme keeps the canvas colour in step with the head script's, or
-      // the next navigation paints the old theme's background for a frame.
-      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-      applyTheme(next);
-      store('thm-theme', next);
-      label();
+  function pageUrl(input) {
+    const url = destination(input);
+    if (url.origin !== location.origin || url.username || url.password) return null;
+    if (!['/', '/network/', '/players/', '/achievements/', '/about/'].includes(url.pathname) && !/^\/players\/[A-Za-z0-9_]+\/$/.test(url.pathname)) return null;
+    url.hash = '';
+    return url;
+  }
+
+  function remember(key, entry) {
+    pages.delete(key);
+    pages.set(key, entry);
+    while (pages.size > pageLimit) pages.delete(pages.keys().next().value);
+  }
+
+  async function pageHtml(input) {
+    const url = pageUrl(input);
+    if (!url) throw new Error('Unsupported page');
+    const key = url.href;
+    let entry = pages.get(key);
+    if (entry && Date.now() - entry.time < pageLifetime) return entry.promise;
+    entry = { time: Date.now() };
+    entry.promise = fetch(key, { signal: AbortSignal.timeout(8000), credentials: 'same-origin', cache: 'no-cache' }).then(async response => {
+      if (!response.ok || !response.headers.get('content-type')?.includes('text/html')) throw new Error('Page unavailable');
+      if (response.url !== key) throw new Error('Redirect requires document navigation');
+      const markup = await response.text();
+      if (markup.length > 500_000) throw new Error('Page too large');
+      return markup;
+    }).catch(error => {
+      if (pages.get(key) === entry) pages.delete(key);
+      throw error;
     });
-  });
-}
+    remember(key, entry);
+    return entry.promise;
+  }
 
-// ─── Menu ───────────────────────────────────────────────────────────────────
-function menu() {
-  const burger = document.querySelector('.nav-burger');
-  const links = document.querySelector('.nav-links');
-  burger?.addEventListener('click', () => {
-    const open = links.classList.toggle('open');
-    burger.setAttribute('aria-expanded', String(open));
-    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-  });
-  links?.addEventListener('click', (e) => {
-    if (!e.target.closest('a')) return;
-    links.classList.remove('open');
+  function prefetch(input) {
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || '')) return;
+    const url = pageUrl(input);
+    if (!url || url.href === pageUrl(location.href)?.href) return;
+    void pageHtml(url.href).catch(() => {});
+  }
+
+  async function warmPages() {
+    if (prefetching || connection?.saveData) return;
+    prefetching = true;
+    const urls = [...new Set([...document.querySelectorAll('a[href]')].map(el => pageUrl(el.href)?.href).filter(Boolean))].slice(0, pageLimit);
+    for (const url of urls) {
+      if (connection?.saveData) break;
+      if (url !== pageUrl(location.href)?.href) {
+        try { await pageHtml(url); } catch { /* A hover retries failed pages. */ }
+      }
+    }
+    prefetching = false;
+  }
+
+  function disposePage() {
+    pageController?.abort();
+    pageCleanups.forEach(cleanup => cleanup());
+    pageCleanups = [];
+  }
+
+  function observe(elements, callback, options) {
+    if (!elements.length) return;
+    const observer = new IntersectionObserver(callback, options);
+    elements.forEach(el => observer.observe(el));
+    pageCleanups.push(() => observer.disconnect());
+    return observer;
+  }
+
+  function timestamp(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function stats(signal) {
+    const discord = document.getElementById('stat-discord');
+    if (discord) {
+      try {
+        if (!statsReading || Date.now() - statsReading.time > 30_000) {
+          const response = await fetch('/api/stats', { cache: 'no-store', signal });
+          if (!response.ok) throw new Error('Stats unavailable');
+          statsReading = { data: await response.json(), time: Date.now() };
+        }
+        if (signal.aborted) return;
+        for (const [id, key] of [['stat-discord', 'discordMembers'], ['stat-blocks', 'dailyBlocks'], ['stat-members', 'noviceMembers']]) {
+          const value = statsReading.data[key];
+          if (Number.isFinite(value) && value >= 0) document.getElementById(id).textContent = format.format(value);
+        }
+        const time = timestamp(statsReading.data.updated);
+        if (time) document.getElementById('stats-updated').textContent = time;
+      } catch { /* Keep the labelled placeholders. */ }
+    }
+    const map = document.getElementById('map-updated-time');
+    if (map) {
+      const observer = observe([map], async entries => {
+        if (!entries.some(entry => entry.isIntersecting)) return;
+        observer.disconnect();
+        try {
+          const response = await fetch('/map-meta.json', { signal, cache: 'no-cache' });
+          if (!response.ok) return;
+          const time = timestamp((await response.json()).updated);
+          if (!signal.aborted && time) map.textContent = time;
+        } catch { /* The map remains usable offline. */ }
+      }, { rootMargin: '200px' });
+    }
+  }
+
+  function lightboxes(signal) {
+    const map = document.getElementById('map-zoom');
+    document.querySelector('.map-open')?.addEventListener('click', () => map?.showModal(), { signal });
+    const box = document.createElement('dialog');
+    box.className = 'zoom lightbox';
+    box.setAttribute('aria-label', 'Enlarged image');
+    const close = document.createElement('button');
+    close.className = 'zoom-close mono';
+    close.type = 'button';
+    close.textContent = 'Close ×';
+    const image = document.createElement('img');
+    image.alt = '';
+    image.decoding = 'async';
+    box.append(close, image);
+    document.getElementById('content').append(box);
+    for (const dialog of [box, map].filter(Boolean)) {
+      dialog.querySelector('.zoom-close')?.addEventListener('click', () => dialog.close(), { signal });
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog || event.target.classList.contains('zoom-scroll')) dialog.close();
+      }, { signal });
+    }
+    document.querySelectorAll('#content img').forEach(img => {
+      if (img.closest('a, button, .zoom')) return;
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-label', `Enlarge: ${img.alt || 'image'}`);
+      const show = () => {
+        image.src = img.dataset.fullimage || img.currentSrc || img.src;
+        image.alt = img.alt;
+        box.showModal();
+      };
+      img.addEventListener('click', show, { signal });
+      img.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); show(); }
+      }, { signal });
+    });
+  }
+
+  function loadScript(src, integrity) {
+    if (!scripts.has(src)) {
+      const promise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        if (integrity) { script.integrity = integrity; script.crossOrigin = 'anonymous'; }
+        script.onload = resolve;
+        script.onerror = () => { script.remove(); reject(new Error('Script unavailable')); };
+        document.head.append(script);
+      }).catch(error => { scripts.delete(src); throw error; });
+      scripts.set(src, promise);
+    }
+    return scripts.get(src);
+  }
+
+  function lazyRenderers(signal) {
+    const skin = document.getElementById('skin-canvas');
+    if (skin) {
+      const observer = observe([skin], async entries => {
+        if (!entries.some(entry => entry.isIntersecting)) return;
+        observer.disconnect();
+        try {
+          await loadScript('/js/vendor/three-r128.min.js');
+          await loadScript('/js/skin.js?v=19');
+          if (!signal.aborted && skin.isConnected) window.thmSkin(skin, signal);
+        } catch {
+          if (!signal.aborted) skin.closest('.plate')?.querySelector('.skin-hint')?.replaceChildren('Skin preview unavailable');
+        }
+      }, { rootMargin: '160px' });
+    }
+  }
+
+  function onScroll() {
+    document.querySelector('.nav')?.classList.toggle('scrolled', scrollY > 24);
+    if (rail && !motion.matches) {
+      const bounds = rail.getBoundingClientRect();
+      if (bounds.bottom > 0 && bounds.top < innerHeight && bounds.height > 0) rail.style.setProperty('--fill', Math.min(1, Math.max(0, (innerHeight * .6 - bounds.top) / bounds.height)).toFixed(3));
+    }
+  }
+
+  function initPage() {
+    pageController = new AbortController();
+    const { signal } = pageController;
+    rail = document.querySelector('.log-rail');
+    if (rail && motion.matches) rail.style.setProperty('--fill', '1');
+    observe([...document.querySelectorAll('.log-row')], entries => entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('seen');
+    }), { threshold: .2 });
+    document.querySelectorAll('[data-route]').forEach(link => {
+      const route = new URL(link.href).pathname;
+      if (route === location.pathname || (route === '/players/' && location.pathname.startsWith(route))) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    lightboxes(signal);
+    void stats(signal);
+    lazyRenderers(signal);
+    onScroll();
+    if ('requestIdleCallback' in window) requestIdleCallback(warmPages, { timeout: 1500 });
+    else setTimeout(warmPages, 300);
+  }
+
+  function updateHead(doc) {
+    document.title = doc.title;
+    for (const selector of ['meta[name="description"]', 'link[rel="canonical"]', 'meta[property="og:title"]', 'meta[property="og:description"]', 'meta[property="og:url"]']) {
+      const next = doc.querySelector(selector);
+      const current = document.querySelector(selector);
+      if (next && current) current.replaceWith(next);
+    }
+  }
+
+  async function go(input, { push = true, restore = null, replace = false } = {}) {
+    const id = ++navigation;
+    const url = destination(input);
+    let doc;
+    try {
+      doc = new DOMParser().parseFromString(await pageHtml(url.href), 'text/html');
+      if (!doc.getElementById('content') || !doc.title) throw new Error('Invalid page');
+    } catch {
+      if (id === navigation) location.assign(url.href);
+      return;
+    }
+    if (id !== navigation) return;
+    transition?.skipTransition();
+    const swap = () => {
+      if (id !== navigation) return;
+      disposePage();
+      if (push) {
+        history.replaceState({ ...history.state, y: scrollY }, '');
+        history.pushState({ y: 0 }, '', url.href);
+      }
+      if (replace) history.replaceState({ y: 0 }, '', url.href);
+      updateHead(doc);
+      const content = document.getElementById('content');
+      content.replaceChildren(...doc.getElementById('content').childNodes);
+      currentUrl = new URL(location.href);
+      initPage();
+      let target;
+      try { target = url.hash && document.getElementById(decodeURIComponent(url.hash.slice(1))); } catch {}
+      if (restore !== null) scrollTo({ top: restore, behavior: 'instant' });
+      else if (target) target.scrollIntoView({ behavior: 'instant' });
+      else scrollTo({ top: 0, behavior: 'instant' });
+      content.focus({ preventScroll: true });
+      onScroll();
+    };
+    if (!motion.matches && document.startViewTransition) transition = document.startViewTransition(swap);
+    else swap();
+  }
+
+  function closeMenu() {
+    document.querySelector('.nav-links')?.classList.remove('open');
+    const burger = document.querySelector('.nav-burger');
     burger?.setAttribute('aria-expanded', 'false');
     burger?.setAttribute('aria-label', 'Open menu');
-  });
-}
-
-// ─── Reveal on scroll ───────────────────────────────────────────────────────
-function reveals() {
-  const obs = track(
-    new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          e.target.classList.add('in', 'visible');
-          obs.unobserve(e.target);
-        }),
-      { threshold: 0.12 }
-    )
-  );
-  document.querySelectorAll('.rv, .reveal').forEach((el) => obs.observe(el));
-
-  // Log markers fill as their entry comes into view.
-  const seen = track(
-    new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          e.target.classList.add('seen');
-          seen.unobserve(e.target);
-        }),
-      { threshold: 0.3 }
-    )
-  );
-  document.querySelectorAll('.log-row').forEach((el) => seen.observe(el));
-}
-
-// ─── Active nav link ────────────────────────────────────────────────────────
-function activeNav() {
-  const links = document.querySelectorAll('.nav-links a[href*="#"]');
-  if (!links.length) return;
-  const obs = track(
-    new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          links.forEach((a) => a.classList.toggle('active', a.hash === `#${e.target.id}`));
-        }),
-      { rootMargin: '-30% 0px -55% 0px' }
-    )
-  );
-  document.querySelectorAll('section[id]').forEach((s) => obs.observe(s));
-}
-
-// ─── Numbers ────────────────────────────────────────────────────────────────
-// Counts up once, so a live reading arrives as a reading rather than a jump.
-function setCount(id, value) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (reduced) {
-    el.textContent = fmt.format(value);
-    return;
-  }
-  const start = performance.now();
-  const step = (now) => {
-    const t = Math.min(1, (now - start) / 900);
-    el.textContent = fmt.format(Math.round(value * (1 - Math.pow(1 - t, 3))));
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
-function stats() {
-  if (document.getElementById('stat-discord')) {
-    fetch('/api/stats', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        setCount('stat-discord', d.discordMembers);
-        setCount('stat-blocks', d.dailyBlocks);
-        setCount('stat-members', d.noviceMembers);
-        const t = stamp(d.updated);
-        if (t) document.getElementById('stats-updated').textContent = t;
-      })
-      .catch(() => {});
   }
 
-  const mapEl = document.getElementById('map-updated-time');
-  if (mapEl) {
-    fetch('/map-meta.json')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        const t = stamp(d.updated);
-        if (t) mapEl.textContent = t;
-      })
-      .catch(() => {});
-  }
-}
-
-// ─── Enlarged map ───────────────────────────────────────────────────────────
-// ponytail: native <dialog> — Esc, focus trap and the backdrop come free.
-function mapZoom() {
-  const zoom = document.getElementById('map-zoom');
-  if (!zoom) return;
-  const open = document.querySelector('.map-open');
-  if (open) open.addEventListener('click', () => zoom.showModal());
-  zoom.querySelector('.zoom-close').addEventListener('click', () => zoom.close());
-  // Click outside the image closes it, like every other lightbox.
-  zoom.addEventListener('click', (e) => {
-    if (e.target === zoom || e.target.classList.contains('zoom-scroll')) zoom.close();
-  });
-}
-
-// ─── Every other image enlarges too ─────────────────────────────────────────
-// ponytail: one dialog and one handler per image, instead of wrapping 30-odd
-// <img> in buttons across six pages. The nav mark and the map (its own pannable
-// dialog above) opt out.
-function zoomableImages() {
-  const box = document.createElement('dialog');
-  box.className = 'zoom lightbox';
-  box.innerHTML =
-    '<button class="zoom-close mono mono-sm" type="button">Close &times;</button><img alt="" />';
-  const boxImg = box.querySelector('img');
-  document.body.append(box);
-  box.querySelector('.zoom-close').addEventListener('click', () => box.close());
-  box.addEventListener('click', (e) => {
-    if (e.target !== boxImg) box.close();
-  });
-
-  document.querySelectorAll('img').forEach((img) => {
-    if (img.closest('.nav, .map-open, .zoom')) return;
-    img.tabIndex = 0;
-    img.setAttribute('role', 'button');
-    const show = () => {
-      boxImg.src = img.currentSrc || img.src;
-      boxImg.alt = img.alt;
-      box.showModal();
-    };
-    img.addEventListener('click', show);
-    img.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      e.preventDefault();
-      show();
+  function initShell() {
+    applyTheme(preference('thm-theme'));
+    history.scrollRestoration = 'manual';
+    history.replaceState({ ...history.state, y: scrollY }, '');
+    document.querySelector('.theme-toggle')?.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      preference('thm-theme', next);
     });
-  });
-}
-
-// ─── Skin viewer ────────────────────────────────────────────────────────────
-// three.js and skin.js are pulled in only by pages that have a canvas, and only
-// once per session — a profile reached through the router has no <script> tags
-// of its own, since swapped-in markup never executes them.
-const scripts = new Map();
-
-function loadScript(src) {
-  if (!scripts.has(src)) {
-    scripts.set(
-      src,
-      new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.append(s);
-      })
-    );
-  }
-  return scripts.get(src);
-}
-
-async function skinViewer() {
-  if (!document.getElementById('skin-canvas')) return;
-  try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-    await loadScript('/js/skin.js?v=3');
-    thmSkin();
-  } catch {
-    // No viewer; the plate keeps its facts.
-  }
-}
-
-// ─── Client-side navigation ─────────────────────────────────────────────────
-const pages = new Map(); // url -> html, so back/forward never refetches
-
-async function pageHtml(url) {
-  if (!pages.has(url)) {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(r.status);
-    pages.set(url, await r.text());
-  }
-  return pages.get(url);
-}
-
-async function go(url, { push = true, restore = null } = {}) {
-  let doc;
-  try {
-    doc = new DOMParser().parseFromString(await pageHtml(url), 'text/html');
-    if (!doc.body.children.length) throw new Error('empty');
-  } catch {
-    location.href = url; // hand it back to the browser rather than dead-end
-    return;
-  }
-
-  const swap = () => {
-    if (push) {
-      history.replaceState({ y: scrollY }, '');
-      history.pushState({ y: 0 }, '', url);
-    }
-    document.title = doc.title;
-    document.body.replaceChildren(...doc.body.childNodes);
-    currentPath = location.pathname;
-    initPage();
-
-    const hash = new URL(url, location.href).hash;
-    const target = hash && document.getElementById(hash.slice(1));
-    if (restore !== null) scrollTo({ top: restore, behavior: 'instant' });
-    else if (target) target.scrollIntoView({ behavior: 'instant' });
-    else scrollTo({ top: 0, behavior: 'instant' });
-  };
-
-  // Chrome and Safari crossfade it; everywhere else it is an instant swap,
-  // which is still a swap and not a page load.
-  if (!reduced && document.startViewTransition) document.startViewTransition(swap);
-  else swap();
-}
-
-function router() {
-  history.scrollRestoration = 'manual';
-  if (!history.state) history.replaceState({ y: 0 }, '');
-
-  addEventListener('click', (e) => {
-    if (e.defaultPrevented || e.button !== 0) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-
-    const a = e.target.closest('a[href]');
-    if (!a || a.target || a.hasAttribute('download')) return;
-    if (a.origin !== location.origin) return; // Discord, the wiki, mailto:
-    // A link into the current page is the browser's job — let it scroll.
-    if (a.pathname === currentPath && a.hash) return;
-    if (a.href === location.href) return;
-
-    e.preventDefault();
-    go(a.href);
-  });
-
-  addEventListener('popstate', (e) => {
-    // Hash-only history entries we never intercepted: leave them alone.
-    if (location.pathname === currentPath) return;
-    go(location.href, { push: false, restore: e.state?.y ?? 0 });
-  });
-}
-
-// ─── Wiring ─────────────────────────────────────────────────────────────────
-function initPage() {
-  observers.forEach((o) => o.disconnect());
-  observers = [];
-
-  navEl = document.querySelector('.nav');
-  rail = document.querySelector('.log-rail');
-
-  themeToggle();
-  menu();
-  reveals();
-  activeNav();
-  stats();
-  mapZoom();
-  zoomableImages();
-  skinViewer();
-
-  if (rail && reduced) rail.style.setProperty('--fill', '1');
-  onScroll();
-}
-
-function initShell() {
-  let queued = false;
-  addEventListener(
-    'scroll',
-    () => {
+    document.querySelector('.nav-burger')?.addEventListener('click', event => {
+      const open = document.querySelector('.nav-links').classList.toggle('open');
+      event.currentTarget.setAttribute('aria-expanded', String(open));
+      event.currentTarget.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
+    let queued = false;
+    addEventListener('scroll', () => {
       if (queued) return;
       queued = true;
-      requestAnimationFrame(() => {
-        onScroll();
-        queued = false;
-      });
-    },
-    { passive: true }
-  );
-  router();
-}
+      requestAnimationFrame(() => { queued = false; onScroll(); });
+    }, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    for (const name of ['pointerover', 'focusin']) document.addEventListener(name, event => {
+      const link = event.target.closest?.('a[href]');
+      if (link) prefetch(link.href);
+    });
+    document.addEventListener('click', event => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target.closest?.('a[href]');
+      if (!link || (link.target && link.target !== '_self') || link.hasAttribute('download')) return;
+      if (!pageUrl(link.href)) return;
+      closeMenu();
+      const url = destination(link.href);
+      if (url.pathname === currentUrl.pathname && url.search === currentUrl.search) {
+        // Invalidate any older request even when this click stays on the page.
+        navigation++;
+        return;
+      }
+      event.preventDefault();
+      void go(link.href);
+    });
+    addEventListener('popstate', event => {
+      navigation++;
+      if (location.pathname === currentUrl.pathname && location.search === currentUrl.search) return;
+      closeMenu();
+      void go(location.href, { push: false, restore: event.state?.y ?? 0 });
+    });
+    addEventListener('pagehide', disposePage);
+    addEventListener('pageshow', event => { if (event.persisted) initPage(); });
+  }
 
-document.addEventListener('DOMContentLoaded', () => {
+  const initialUrl = new URL(location.href);
+  initialUrl.hash = '';
+  remember(pageUrl(initialUrl.href)?.href, { time: Date.now(), promise: Promise.resolve(document.documentElement.outerHTML) });
   initShell();
   initPage();
-});
+  if (destination(location.href).href !== location.href) void go(location.href, { push: false, replace: true });
+})();
