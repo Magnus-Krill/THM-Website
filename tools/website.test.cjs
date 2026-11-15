@@ -19,7 +19,7 @@ test('pages revalidate, versioned assets cache, and live data stays fresh', asyn
   assert.equal(page.status, 200);
   assert.match(page.headers.get('cache-control'), /no-cache, max-age=0/);
   assert.match(page.headers.get('cloudflare-cdn-cache-control'), /max-age=300/);
-  const css = await fetch(origin + '/css/thm.css?v=24');
+  const css = await fetch(origin + '/css/thm.css?v=31');
   assert.match(css.headers.get('cache-control'), /immutable/);
   const unversioned = await fetch(origin + '/css/thm.css');
   assert.doesNotMatch(unversioned.headers.get('cache-control'), /immutable/);
@@ -47,8 +47,16 @@ test('highway map includes only public Nether geometry', () => {
     },
     overworld: { other: entry(5000, 5000, true) },
     end: { other: entry(1000, 1000, true) }
-  });
-  assert.deepEqual(map, { axes: [['N', 0, -500], ['E', 500, 0, 800, 0]], rings: [[25, 1]], diamonds: [[100, 0]], points: [['landmark', 23, 45]] });
+  }, [
+    { route: 'ring-1000', side: 1, paved: false, from: 10, to: 100, direction: 'S', builder: 'private' },
+    { route: 'ring-200', side: 1, paved: true, from: 10, to: 100 },
+    { route: 'ring-25', side: 2, paved: true, from: 10, to: 40 },
+    { route: 'diamond-100', side: 0, paved: true, from: 20, to: 90 },
+    { route: 'diamond-100', side: 0, paved: false, from: 20, to: 90 },
+    { route: 'diamond-1000', side: 0, paved: false, from: 20, to: 2000 }
+  ]);
+  assert.deepEqual(map, { axes: [['N', 0, -500], ['E', 500, 0, 800, 0]], rings: [[25, 1]], diamonds: [[100, 0]], points: [['landmark', 23, 45]],
+    progress: [['ring-1000', 1, 0, 10, 100], ['diamond-100', 0, 1, 20, 90]] });
 });
 
 test('map opens at /map and revalidates its HTML', async () => {
@@ -58,17 +66,20 @@ test('map opens at /map and revalidates its HTML', async () => {
   assert.match(await response.text(), /<title>Nether highway map/);
 });
 
-test('map zoom eases around the cursor and returns to idle', () => {
+test('map zoom eases around the cursor, clips distant geometry, and returns to idle', () => {
   class Element extends EventTarget {
     constructor() { super(); this.dataset = {}; this.classList = { remove() {} }; }
     append() {}
     add() {}
     setAttribute() {}
+    replaceChildren(...children) { this.textContent = children.map(child => child.textContent).join(' '); }
   }
   const canvas = new Element();
   const frame = new Element();
   const position = new Element();
   const select = new Element();
+  const options = [];
+  select.add = option => options.push(option);
   const controls = new Element();
   const label = new Element();
   const scope = new Element();
@@ -86,10 +97,22 @@ test('map zoom eases around the cursor and returns to idle', () => {
   let paints = 0, resize, now = 0, id = 0;
   const pending = new Map();
   const labels = new Set();
+  const dashedStrokes = [];
+  const dots = [];
   const paint = {
+    dash: [],
     fillRect(x, y) { if (x === 0 && y === 0) paints++; },
     fillText(text) { labels.add(text); },
-    createLinearGradient() { return { addColorStop() {} }; }
+    createLinearGradient() { return { addColorStop() {} }; },
+    setLineDash(dash) { this.dash = dash; },
+    beginPath() { this.path = []; },
+    moveTo(x, y) { this.path.push([x, y]); },
+    lineTo(x, y) { this.path.push([x, y]); },
+    stroke() {
+      if (this.dash.length) dashedStrokes.push({ points: this.path, offset: this.lineDashOffset, dash: [...this.dash] });
+    },
+    arc(x, y, radius) { this.circle = { x, y, radius }; },
+    fill() { dots.push({ ...this.circle, color: this.fillStyle }); }
   };
   canvas.getContext = () => new Proxy(paint, { get: (target, name) => target[name] ?? (() => {}) });
   const window = {};
@@ -97,7 +120,9 @@ test('map zoom eases around the cursor and returns to idle', () => {
   document.createElement = () => new Element();
   const preference = { matches: false };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/highway-map.js'), 'utf8'), {
-    window, document, Option: Element, devicePixelRatio: 1, matchMedia: () => preference,
+    window, document,
+    Option: class { constructor(label, value) { this.label = label; this.value = value; } },
+    devicePixelRatio: 2, matchMedia: () => preference,
     performance: { now: () => now },
     ResizeObserver: class { constructor(callback) { resize = callback; } observe() {} disconnect() {} },
     requestAnimationFrame: cb => { pending.set(++id, cb); return id; },
@@ -115,11 +140,20 @@ test('map zoom eases around the cursor and returns to idle', () => {
 
   const controller = new AbortController();
   require('node:events').setMaxListeners(24, controller.signal);
-  window.thmHighwayMap(canvas, { axes: [['E', 30_000_000, 0]], rings: [], diamonds: [], points: [] }, controller.signal);
+  window.thmHighwayMap(canvas, {
+    axes: [['E', 100, 0, 30_000_000, 0]], rings: [], diamonds: [], points: [],
+    progress: [['diamond-3750000', 3, 0, 1197465, 1875000], ['diamond-3750000', 3, 0, 0, 500000]]
+  }, controller.signal);
   resize([{ contentRect: { width: 500, height: 500 } }]);
   frameAt(0);
+  assert.equal(canvas.width, 1000);
   assert.ok(labels.has('Overworld Border (3.75M)'));
   assert.ok(labels.has('Nether Border (30M)'));
+  const tips = dots.filter(dot => dot.color === '#FFA500' && dot.radius === 4);
+  assert.equal(tips.length, 2);
+  const overviewScale = 500 * .42 / 30_000_000;
+  assert.deepEqual([tips[0].x, tips[0].y], [250 - 2552535 * overviewScale, 250 - 1197465 * overviewScale]);
+  assert.deepEqual([tips[1].x, tips[1].y], [250 - 3250000 * overviewScale, 250 - 500000 * overviewScale]);
   wheel();
   frameAt(1);
   const anchor = position.textContent;
@@ -134,11 +168,41 @@ test('map zoom eases around the cursor and returns to idle', () => {
   wheel();
   frameAt(200);
   assert.equal(pending.size, 0);
+
+  const key = value => canvas.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { key: value }));
+  key('0');
+  for (let i = 0; i < 32; i++) key('+');
+  for (let i = 0; i < 7; i++) key('ArrowRight');
+  dashedStrokes.length = 0;
+  frameAt(220);
+  assert.equal(dashedStrokes.length, 1);
+  const { points, offset } = dashedStrokes[0];
+  assert.equal(points.length, 2);
+  assert.ok(Math.abs(points[0][0] + 4) < .01 && Math.abs(points[1][0] - 504) < .01);
+  assert.ok(points.every(([, y]) => y === 250));
+  assert.ok(Math.abs(offset - 6) < .01);
+
+  const checkpoints = options.filter(option => option.label.includes('WIP'));
+  assert.equal(checkpoints.length, 2);
+  assert.notEqual(checkpoints[0].label, checkpoints[1].label);
+  select.value = checkpoints.find(option => option.label.endsWith('X -2,552,535 · Z -1,197,465')).value;
+  select.dispatchEvent(new Event('change'));
+  dashedStrokes.length = 0;
+  frameAt(240);
+  const progress = dashedStrokes.find(stroke => stroke.dash[0] === 2 && stroke.dash[1] === 4);
+  assert.ok(progress, 'the selected checkpoint renders as a dotted segment');
+  const [[ax, ay], [bx, by]] = progress.points;
+  assert.ok(Math.hypot(bx - ax, by - ay) > 300);
+  assert.match(detail.textContent, /Start X -1,875,000 · Z -1,875,000 End X -2,552,535 · Z -1,197,465/);
+
+  resize([{ contentRect: { width: 3840, height: 2160 } }]);
+  assert.equal(canvas.width, 3840);
+  assert.equal(canvas.height, 2160);
   controller.abort();
 });
 
 test('compression negotiates encodings and keeps all Vary fields', async () => {
-  const css = await fetch(origin + '/css/thm.css?v=24', { headers: { 'accept-encoding': 'gzip' } });
+  const css = await fetch(origin + '/css/thm.css?v=31', { headers: { 'accept-encoding': 'gzip' } });
   assert.equal(css.headers.get('content-encoding'), 'gzip');
   assert.match(css.headers.get('vary'), /Accept-Encoding/);
   assert.ok((await css.text()).startsWith('@font-face'));
@@ -152,6 +216,13 @@ test('cape URLs cannot be poisoned with Host or forwarding headers', async () =>
   const data = await response.json();
   assert.ok(data.capes.every(cape => new URL(cape.url).origin === 'https://highwaymen.cc'));
   assert.equal(response.headers.get('cloudflare-cdn-cache-control'), 'no-store');
+});
+
+test('cape index IDs can be selected through KitBot', async () => {
+  const response = await fetch(origin + '/cape/index');
+  const { capes } = await response.json();
+  assert.ok(capes.length > 0);
+  for (const { id } of capes) assert.match(id, /^[a-zA-Z0-9_-]{1,32}$/);
 });
 
 test('old profile redirects and missing pages cannot be cached', async () => {

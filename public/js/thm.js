@@ -192,7 +192,7 @@
     function loadMap() {
       loading ??= Promise.all([
         fetch('/api/highway-map', { cache: 'no-cache', signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]) }),
-        loadScript('/js/highway-map.js?v=24')
+        loadScript('/js/highway-map.js?v=31')
       ]).then(([response]) => {
         if (!response.ok) throw new Error('Highway map unavailable');
         return response.json();
@@ -282,7 +282,7 @@
         observer.disconnect();
         try {
           await loadScript('/js/vendor/three-r128.min.js');
-          await loadScript('/js/skin.js?v=24');
+          await loadScript('/js/skin.js?v=31');
           if (!signal.aborted && skin.isConnected) window.thmSkin(skin, signal);
         } catch {
           if (!signal.aborted) skin.closest('.plate')?.querySelector('.skin-hint')?.replaceChildren('Skin preview unavailable');

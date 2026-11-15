@@ -1,9 +1,11 @@
 'use strict';
 
+const { publicHighwayLoopProgress } = require('../../kitbot/helpers/highwayGeometry.cjs');
+
 const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const axisNames = new Set(directions.flatMap(name => [name, 'dug' + name]));
 
-function publicNetherMap({ nether = {} }) {
+function publicNetherMap({ nether = {} }, segments = []) {
   function coordinates(entry) {
     const { x, z } = entry?.coordinates ?? {};
     if (Number.isSafeInteger(x) && Number.isSafeInteger(z)) return [x, z];
@@ -31,7 +33,8 @@ function publicNetherMap({ nether = {} }) {
     if (point) points.push([name, ...point]);
   }
 
-  return { axes, rings: loops(nether.ringRoads), diamonds: loops(nether.diamondHighways), points };
+  const progress = publicHighwayLoopProgress(nether, segments);
+  return { axes, rings: loops(nether.ringRoads), diamonds: loops(nether.diamondHighways), points, ...(progress.length ? { progress } : {}) };
 }
 
 module.exports = { publicNetherMap };

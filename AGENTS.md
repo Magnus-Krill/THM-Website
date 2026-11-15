@@ -68,7 +68,8 @@ Each head has only the hashed pre-paint theme script;
 - `stats.json`, `map-meta.json` and highway-map images are written externally.
   Preserve them. `/api/stats` is no-store; map data caches for only 60 seconds.
 - `/api/highway-map` reads Kitbot’s highway JSONC and serves a cached projection
-  of public Nether geometry only. Keep hidden entries and their metadata private.
+  of public Nether geometry and work-in-progress loop segments. It shares KitBot’s
+  loop visibility rules with the Discord map. Keep hidden routes and builder metadata private.
 - Security headers include a CSP with hashed boot scripts and local script/font
   sources. Do not add unsafe-inline/unsafe-eval to script-src. Compression
   negotiates Brotli/gzip. 404/error responses must stay no-store.

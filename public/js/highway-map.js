@@ -4,19 +4,42 @@
   const border = 3_750_000;
   const number = new Intl.NumberFormat('en-US');
   const colors = { paved: '#9B30FF', dug: '#FFA500', landmark: 'rgba(0, 255, 100, 0.75)', border: 'rgba(0, 123, 255, 0.3)' };
+  const compactDistance = n => n >= 1e6 ? `${n / 1e6}m` : n >= 1e3 ? `${n / 1e3}k` : String(n);
   const roadLabels = { paved: '#ffffff', dug: '#FFA500', landmark: 'rgba(139, 255, 160, 0.73)' };
   const worldLimit = 30_000_000;
+  const maxCanvasPixels = 3840 * 2160;
+  const solid = [];
+  const dugDash = [6, 5];
+  const borderDash = [6, 4];
+  const progressDash = [2, 4];
+  const progressMarkerThreshold = 12;
+  const square = r => [[-r, -r], [r, -r], [r, r], [-r, r], [-r, -r]];
+  const diamond = r => [[0, -r], [r, 0], [0, r], [-r, 0], [0, -r]];
   const borders = [
-    { radius: border, name: 'Overworld Border (3.75M)', dashed: true },
-    { radius: worldLimit, name: 'Nether Border (30M)', dashed: false }
+    { radius: border, name: 'Overworld Border (3.75M)', path: square(border), dash: borderDash },
+    { radius: worldLimit, name: 'Nether Border (30M)', path: square(worldLimit), dash: solid }
   ];
 
-  function features({ axes, rings, diamonds, points }) {
+  function features({ axes, rings, diamonds, points, progress = [] }) {
     return [
-      ...rings.map(([r, paved]) => ({ name: `Ring road · ${number.format(r)}`, x: r, z: -r, radius: r,
-        kind: paved ? 'paved' : 'dug', path: [[-r, -r], [r, -r], [r, r], [-r, r], [-r, -r]] })),
-      ...diamonds.map(([r, paved]) => ({ name: `Diamond highway · ${number.format(r)}`, x: r, z: 0, radius: r,
-        kind: paved ? 'paved' : 'dug', path: [[0, -r], [r, 0], [0, r], [-r, 0], [0, -r]] })),
+      ...rings.map(([r, paved]) => ({ name: `Ring road · ${paved ? '' : 'dug'}${compactDistance(r)}`, x: r, z: -r, radius: r,
+        kind: paved ? 'paved' : 'dug', path: square(r) })),
+      ...diamonds.map(([r, paved]) => ({ name: `Diamond highway · ${paved ? '' : 'dug'}${compactDistance(r)}`, x: r, z: 0, radius: r,
+        kind: paved ? 'paved' : 'dug', path: diamond(r) })),
+      ...progress.map(([route, side, paved, from, to]) => {
+        const [type, radiusText] = route.split('-');
+        const r = Number(radiusText), isRing = type === 'ring';
+        const vertices = isRing ? square(r) : diamond(r);
+        const [ax, az] = vertices[side], [bx, bz] = vertices[side + 1];
+        const point = offset => [ax + Math.sign(bx - ax) * offset, az + Math.sign(bz - az) * offset];
+        const spacing = isRing ? r : r / 2;
+        const runsBackward = to % spacing === 0 && from % spacing !== 0;
+        const [startX, startZ] = point(runsBackward ? to : from), [x, z] = point(runsBackward ? from : to);
+        const sideName = (isRing ? ['N', 'E', 'S', 'W'] : ['NE', 'SE', 'SW', 'NW'])[side];
+        return { name: `${isRing ? 'Ring road' : 'Diamond highway'} · ${paved ? '' : 'dug'}${compactDistance(r)} · ${sideName} · WIP`,
+          x, z, radius: r, kind: paved ? 'paved' : 'dug', progress: true, path: [[startX, startZ], [x, z]],
+          midpoint: [(startX + x) / 2, (startZ + z) / 2], length: Math.hypot(x - startX, z - startZ) };
+      }),
       ...axes.flatMap(([name, x, z, dx, dz]) => {
         const extendsPastPaving = dx !== undefined && (dx !== x || dz !== z);
         const paved = { name: `${name} highway`, label: extendsPastPaving ? '' : name, x, z, kind: 'paved', path: [[0, 0], [x, z]] };
@@ -33,10 +56,28 @@
     return Math.hypot(x - ax - dx * t, z - az - dz * t);
   }
 
+  function clipSegment(x, y, dx, dy, width, height) {
+    // Leave room for the stroke at the viewport edge.
+    let first = 0, last = 1;
+    for (const [start, delta, limit] of [[x, dx, width], [y, dy, height]]) {
+      if (delta === 0) {
+        if (start < -4 || start > limit + 4) return;
+        continue;
+      }
+      const a = (-4 - start) / delta;
+      const b = (limit + 4 - start) / delta;
+      first = Math.max(first, Math.min(a, b));
+      last = Math.min(last, Math.max(a, b));
+      if (first >= last) return;
+    }
+    return [first, last];
+  }
+
   window.thmHighwayMap = (canvas, data, signal) => {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas unavailable');
     const roads = features(data);
+    const progressRoads = roads.filter(road => road.progress);
     const interactive = canvas.hasAttribute('data-interactive');
     const frame = canvas.closest('.atlas-frame');
     const position = frame?.querySelector('.atlas-position');
@@ -49,19 +90,54 @@
     const scale = () => base * zoom;
     const toX = x => width / 2 + (x - cx) * scale();
     const toY = z => height / 2 + (z - cz) * scale();
+    const showMarker = road => road?.progress && road.length * scale() < progressMarkerThreshold;
     const worldX = x => cx + (x - width / 2) / scale();
     const worldZ = y => cz + (y - height / 2) / scale();
     const clamp = value => Math.min(range, Math.max(-range, value));
     const coordinate = value => number.format(Math.round(value) || 0);
     const coords = (x, z) => `X ${coordinate(x)} · Z ${coordinate(z)}`;
     const reducedMotion = interactive && matchMedia('(prefers-reduced-motion: reduce)');
-    const formatGrid = step => step >= 1e6 ? `${step / 1e6}M` : step >= 1e3 ? `${step / 1e3}k` : String(step);
 
     function dot(x, y, radius, color) {
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    function strokePath(points, dash) {
+      const dashLength = dash.length ? dash[0] + dash[1] : 0;
+      ctx.setLineDash(dash);
+      let x = toX(points[0][0]), y = toY(points[0][1]);
+      let phase = 0, active = false;
+      for (let i = 1; i < points.length; i++) {
+        const nextX = toX(points[i][0]), nextY = toY(points[i][1]);
+        const dx = nextX - x, dy = nextY - y;
+        const length = dashLength ? Math.hypot(dx, dy) : 0;
+        // Canvas lays out dashes along the entire input path before clipping.
+        const visible = clipSegment(x, y, dx, dy, width, height);
+        if (visible) {
+          const [first, last] = visible;
+          if (!active || first > 0) {
+            if (active) ctx.stroke();
+            ctx.beginPath();
+            if (dashLength) ctx.lineDashOffset = (phase + first * length) % dashLength;
+            ctx.moveTo(x + first * dx, y + first * dy);
+          }
+          ctx.lineTo(x + last * dx, y + last * dy);
+          active = last === 1;
+          if (!active) ctx.stroke();
+        } else if (active) {
+          ctx.stroke();
+          active = false;
+        }
+        phase += length;
+        x = nextX;
+        y = nextY;
+      }
+      if (active) ctx.stroke();
+      ctx.lineDashOffset = 0;
+      ctx.setLineDash(solid);
     }
 
     function draw(now) {
@@ -115,24 +191,13 @@
 
       ctx.strokeStyle = colors.border;
       ctx.lineWidth = 2;
-      for (const { radius, dashed } of borders) {
-        ctx.setLineDash(dashed ? [6, 4] : []);
-        ctx.strokeRect(toX(-radius), toY(-radius), 2 * radius * scale(), 2 * radius * scale());
-      }
-      ctx.setLineDash([]);
+      for (const { path, dash } of borders) strokePath(path, dash);
 
       function stroke(road) {
-        if (!road.path || (road.radius * scale() < 2 && road !== selected)) return;
-        ctx.beginPath();
-        road.path.forEach(([x, z], index) => {
-          if (index === 0) ctx.moveTo(toX(x), toY(z));
-          else ctx.lineTo(toX(x), toY(z));
-        });
+        if (!road.path || showMarker(road) || (!road.progress && road.radius * scale() < 2 && road !== selected)) return;
         ctx.strokeStyle = colors[road.kind];
         ctx.lineWidth = road === selected ? 4 : road === hovered ? 3 : road.radius ? 1.5 : 2;
-        if (road.kind === 'dug') ctx.setLineDash([6, 5]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        strokePath(road.path, road.progress ? progressDash : road.kind === 'dug' ? dugDash : solid);
       }
 
       for (const road of roads) if (road !== selected) stroke(road);
@@ -143,6 +208,7 @@
       const labels = [[toX(0), toY(0)]];
       const marked = selected ? [selected, ...roads.filter(road => road !== selected)] : roads;
       for (const road of marked) {
+        if (showMarker(road)) continue;
         if (road.label === undefined && road !== selected) continue;
         const x = toX(road.x), y = toY(road.z);
         if (x < 0 || x > width || y < 0 || y > height) continue;
@@ -191,11 +257,20 @@
         ctx.restore();
       }
 
+      for (const road of progressRoads) {
+        if (!showMarker(road)) continue;
+        const x = toX(road.x), y = toY(road.z);
+        if (x < -7 || x > width + 7 || y < -7 || y > height + 7) continue;
+        const size = road === selected || road === hovered ? 5 : 4;
+        dot(x, y, size + 2, '#111111');
+        dot(x, y, size, colors[road.kind]);
+      }
+
       if (interactive) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#aaaaaa';
         const barUnits = step * scale() > width / 3 ? step / 2 : step;
-        ctx.fillText(`${formatGrid(Math.round(barUnits))} blocks`, 16, height - 25);
+        ctx.fillText(`${compactDistance(Math.round(barUnits))} blocks`, 16, height - 25);
         ctx.fillRect(16, height - 18, barUnits * scale(), 2);
       }
     }
@@ -210,7 +285,7 @@
       height = contentRect.height;
       if (!width || !height) return;
       base = Math.min(width, height) * .42 / extent;
-      dpr = Math.min(devicePixelRatio || 1, 2);
+      dpr = Math.min(devicePixelRatio || 1, 2, Math.sqrt(maxCanvasPixels / (width * height)));
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       background = undefined;
@@ -228,8 +303,13 @@
     const select = scope.querySelector('[data-map-feature]');
     const detail = scope.querySelector('.atlas-detail');
     const controls = scope.querySelector('.atlas-controls');
+    const progressLegend = scope.querySelector('.atlas-wip');
+    if (progressLegend && data.progress?.length) progressLegend.hidden = false;
     const sorted = [...roads].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    sorted.forEach((road, index) => select.add(new Option(road.name, String(index))));
+    sorted.forEach((road, index) => {
+      const name = road.progress ? `${road.name} · ${coords(road.x, road.z)}` : road.name;
+      select.add(new Option(name, String(index)));
+    });
 
     function inspect(road) {
       selected = road;
@@ -239,7 +319,7 @@
       } else {
         const title = document.createElement('strong');
         title.textContent = road.name;
-        const fields = [road.kind === 'paved' ? 'Paved' : road.kind === 'dug' ? 'Dug' : 'Landmark'];
+        const fields = [road.progress ? 'Work in progress' : road.kind === 'paved' ? 'Paved' : road.kind === 'dug' ? 'Dug' : 'Landmark'];
         if (road.path) {
           let length = 0;
           for (let i = 1; i < road.path.length; i++) {
@@ -247,7 +327,7 @@
           }
           fields.push(`${coordinate(length)} blocks`);
           if (road.radius) fields.push(`Radius ${coordinate(road.radius)} blocks`);
-          else fields.push(`Start ${coords(...road.path[0])}`, `End ${coords(road.x, road.z)}`);
+          if (!road.radius || road.progress) fields.push(`Start ${coords(...road.path[0])}`, `End ${coords(road.x, road.z)}`);
         } else fields.push(coords(road.x, road.z));
         detail.replaceChildren(title, ...fields.map(text => {
           const field = document.createElement('span');
@@ -274,9 +354,22 @@
       schedule();
     }
 
+    const boundedZoom = target => Math.min(Math.max(1, .5 / base), Math.max(.14, target));
+
+    function focusRoad(road) {
+      if (road.progress) {
+        const nextZoom = Math.min(width, height) * .62 / (base * road.length);
+        moveTo(...road.midpoint, boundedZoom(nextZoom));
+      } else if (road.radius) {
+        moveTo(0, 0, boundedZoom(extent / road.radius));
+      } else {
+        moveTo(road.x, road.z, boundedZoom(Math.max(1, extent / 160_000)));
+      }
+    }
+
     function changeZoom(factor, x = width / 2, y = height / 2, animate = true) {
       const targetZoom = (movement?.zoom ?? zoom) * factor;
-      const nextZoom = Math.min(Math.max(1, .5 / base), Math.max(.14, targetZoom));
+      const nextZoom = boundedZoom(targetZoom);
       if (nextZoom === (movement?.zoom ?? zoom)) return;
       moveTo(clamp(worldX(x) - (x - width / 2) / (base * nextZoom)),
         clamp(worldZ(y) - (y - height / 2) / (base * nextZoom)), nextZoom, animate);
@@ -304,11 +397,7 @@
     }, { signal });
     select.addEventListener('change', () => {
       const road = select.value === '' ? undefined : sorted[Number(select.value)];
-      if (road && base) {
-        const nextZoom = road.radius ? extent / road.radius : Math.max(1, extent / 160_000);
-        moveTo(road.radius ? 0 : road.x, road.radius ? 0 : road.z,
-          Math.min(Math.max(1, .5 / base), Math.max(.14, nextZoom)));
-      }
+      if (road && base) focusRoad(road);
       inspect(road);
     }, { signal });
 
@@ -337,9 +426,16 @@
     }
     function hit(x, y) {
       const wx = worldX(x), wz = worldZ(y);
+      let marker, markerDistance = 8;
+      for (const road of progressRoads) {
+        if (!showMarker(road)) continue;
+        const d = Math.hypot(x - toX(road.x), y - toY(road.z));
+        if (d <= markerDistance) { marker = road; markerDistance = d; }
+      }
+      if (marker) return marker;
       let closest, best = 12 / scale();
       for (const road of roads) {
-        if (road.radius * scale() < 2) continue;
+        if (showMarker(road) || (!road.progress && road.radius * scale() < 2)) continue;
         const d = road.path ? Math.min(...road.path.slice(1).map(([bx, bz], index) =>
           distance(wx, wz, ...road.path[index], bx, bz))) : Math.hypot(wx - road.x, wz - road.z);
         if (d <= best) { closest = road; best = d; }
@@ -473,7 +569,9 @@
           canvas.classList.remove('is-dragging');
           if (type === 'pointerup' && !dragged) {
             const { x, y } = local(event);
-            inspect(hit(x, y));
+            const road = hit(x, y);
+            if (showMarker(road)) focusRoad(road);
+            inspect(road);
           }
         }
       }, { signal });

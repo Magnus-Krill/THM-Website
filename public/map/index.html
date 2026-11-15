@@ -15,11 +15,11 @@
     <meta property="og:url" content="https://highwaymen.cc/map" />
     <meta property="og:image" content="https://highwaymen.cc/images/THM-Banner.webp" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preload" href="/fonts/archivo.woff2?v=24" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/archivo.woff2?v=31" as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/webp" href="/images/THM2-transparent.webp" />
     <link rel="apple-touch-icon" href="/images/THM2-transparent.webp" />
     <script>(function(){var t;try{t=localStorage.getItem('thm-theme')}catch(e){}t=t==='dark'?'dark':'light';var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;r.style.background=t==='light'?'#f3efe8':'#0d0b0c'})();</script>
-    <link rel="stylesheet" href="/css/thm.css?v=24" />
+    <link rel="stylesheet" href="/css/thm.css?v=31" />
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
@@ -39,14 +39,16 @@
       </div>
     </nav>
     <main id="content" tabindex="-1">
-      <section class="wrap atlas">
-        <header class="atlas-head">
-          <div><a href="/network/" class="text-link">← Highway network</a><h1>Nether highway map</h1></div>
-          <label class="atlas-select">Find a route or landmark
-            <select data-map-feature disabled><option value="">Choose a route or landmark</option></select>
-          </label>
-        </header>
-        <p class="atlas-detail" role="status">Select a road or landmark for details.</p>
+      <section class="wrap atlas atlas-page">
+        <div class="atlas-panel">
+          <header class="atlas-head">
+            <div><a href="/network/" class="text-link">← Highway network</a><h1>Nether highway map</h1></div>
+            <label class="atlas-select">Find a route or landmark
+              <select data-map-feature disabled><option value="">Choose a route or landmark</option></select>
+            </label>
+          </header>
+          <p class="atlas-detail" role="status">Select a road or landmark for details.</p>
+        </div>
         <div class="atlas-frame">
           <canvas data-highway-map data-interactive width="1100" height="660" tabindex="0"
             aria-label="Public Nether highway map" aria-describedby="map-instructions"></canvas>
@@ -61,10 +63,10 @@
         </div>
         <div class="atlas-info">
           <ul class="atlas-legend" aria-label="Map legend">
-            <li class="atlas-paved">Paved</li><li class="atlas-dug">Dug</li>
-            <li class="atlas-landmark">Landmark</li><li class="atlas-border">Overworld Border (3.75M)</li><li class="atlas-nether-border">Nether Border (30M)</li>
+            <li class="atlas-paved">Paved</li><li class="atlas-dug">Dug</li><li class="atlas-wip" title="Work in progress" hidden>WIP</li>
+            <li class="atlas-landmark">Landmark</li><li class="atlas-border">Overworld border</li><li class="atlas-nether-border">Nether border</li>
           </ul>
-          <p id="map-instructions">Drag or use the arrow keys to pan. Scroll, pinch, or use + and − to zoom. Right-click for coordinates and map actions.</p>
+          <p id="map-instructions" hidden>Use the arrow keys to pan, + and − to zoom, and Shift+F10 for coordinates and map actions.</p>
         </div>
         <noscript><p>Enable JavaScript to explore the map.</p></noscript>
       </section>
@@ -76,6 +78,6 @@
         <p class="foot-credit">History and profiles adapted from the <a href="https://6b.wiki/Wiki/The_Highway_Men" target="_blank" rel="noopener noreferrer">6b6t wiki</a> (CC BY).</p>
       </div>
     </footer>
-    <script src="/js/thm.js?v=24" defer></script>
+    <script src="/js/thm.js?v=31" defer></script>
   </body>
 </html>

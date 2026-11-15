@@ -21,7 +21,7 @@ against its actual surface. Prefer clear labels over terminal-style metadata.
 
 - `/`: clan artwork, a brief introduction, live activity and two route previews.
 - `/network/`: clickable map preview, completion dates and the five-wide standard.
-- `/map`: public Nether survey with road details and coordinate actions.
+- `/map`: viewport-filling Nether survey with floating route details and controls.
   Clicking a preview opens the same map in a dialog.
 - `/players/`: one complete roster ordered by Kitbot’s configured rank hierarchy, with explicit profile availability and retired/former-owner labels.
 - `/players/<name>/`: member history, facts, portfolio and a 3D skin.
