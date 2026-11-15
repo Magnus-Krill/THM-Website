@@ -17,9 +17,9 @@ reach the public server immediately; server changes require restarting only the
 Read `DESIGN.md` before visual changes. Plain HTML, shared `public/css/thm.css`
 and `public/js/thm.js`. No framework, inline behaviour, or per-profile scripts.
 Each head has only the hashed pre-paint theme script;
-`thm.js` is deferred. Keep these heads consistent across all fourteen pages.
+`thm.js` is deferred. Keep these heads consistent across all pages.
 
-- Routes: `/`, `/network/`, `/players/`, `/achievements/`, `/about/` and nine
+- Routes: `/`, `/network/`, `/map`, `/players/`, `/achievements/`, `/about/` and individual
   member profiles. Keep the homepage brief and details on their dedicated pages.
 - Navigation preserves the shell and replaces only `main#content`. `initShell()`
   runs once; `initPage()` runs after each swap. Page listeners use the page
@@ -42,6 +42,9 @@ Each head has only the hashed pre-paint theme script;
   and legacy skins, live Minotar textures, local fallbacks, pointer/keyboard
   control, automatic rotation with a pause button, and complete GPU disposal.
   Rotation stops offscreen, in hidden tabs and with reduced motion.
+- `highway-map.js` draws Canvas 2D previews and the interactive Nether map from
+  `/api/highway-map`. Previews open the map in a dialog using the `/map` layout.
+  Render on resize or interaction and dispose on dialog close or page abort.
 - Profile `MagnusKrill` replaces `Leon_170709`; the server redirects the old URL.
   Roster names link only to profiles that exist. Use live Kitbot Discord ranks at
   Highway Man and above; Retired takes precedence. Keep retired records and the
@@ -64,6 +67,8 @@ Each head has only the hashed pre-paint theme script;
   a successful encode. Failed conversions preserve the PNG.
 - `stats.json`, `map-meta.json` and highway-map images are written externally.
   Preserve them. `/api/stats` is no-store; map data caches for only 60 seconds.
+- `/api/highway-map` reads Kitbot’s highway JSONC and serves a cached projection
+  of public Nether geometry only. Keep hidden entries and their metadata private.
 - Security headers include a CSP with hashed boot scripts and local script/font
   sources. Do not add unsafe-inline/unsafe-eval to script-src. Compression
   negotiates Brotli/gzip. 404/error responses must stay no-store.

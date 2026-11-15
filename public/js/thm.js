@@ -45,7 +45,7 @@
   function pageUrl(input) {
     const url = destination(input);
     if (url.origin !== location.origin || url.username || url.password) return null;
-    if (!['/', '/network/', '/players/', '/achievements/', '/about/'].includes(url.pathname) && !/^\/players\/[A-Za-z0-9_]+\/$/.test(url.pathname)) return null;
+    if (!['/', '/network/', '/map', '/map/', '/players/', '/achievements/', '/about/'].includes(url.pathname) && !/^\/players\/[A-Za-z0-9_]+\/$/.test(url.pathname)) return null;
     url.hash = '';
     return url;
   }
@@ -65,7 +65,9 @@
     entry = { time: Date.now() };
     entry.promise = fetch(key, { signal: AbortSignal.timeout(8000), credentials: 'same-origin', cache: 'no-cache' }).then(async response => {
       if (!response.ok || !response.headers.get('content-type')?.includes('text/html')) throw new Error('Page unavailable');
-      if (response.url !== key) throw new Error('Redirect requires document navigation');
+      if (response.url !== key && (url.pathname !== '/map' || response.url !== new URL('/map/' + url.search, url).href)) {
+        throw new Error('Redirect requires document navigation');
+      }
       const markup = await response.text();
       if (markup.length > 500_000) throw new Error('Page too large');
       return markup;
@@ -134,24 +136,9 @@
         if (time) document.getElementById('stats-updated').textContent = time;
       } catch { /* Keep the labelled placeholders. */ }
     }
-    const map = document.getElementById('map-updated-time');
-    if (map) {
-      const observer = observe([map], async entries => {
-        if (!entries.some(entry => entry.isIntersecting)) return;
-        observer.disconnect();
-        try {
-          const response = await fetch('/map-meta.json', { signal, cache: 'no-cache' });
-          if (!response.ok) return;
-          const time = timestamp((await response.json()).updated);
-          if (!signal.aborted && time) map.textContent = time;
-        } catch { /* The map remains usable offline. */ }
-      }, { rootMargin: '200px' });
-    }
   }
 
   function lightboxes(signal) {
-    const map = document.getElementById('map-zoom');
-    document.querySelector('.map-open')?.addEventListener('click', () => map?.showModal(), { signal });
     const box = document.createElement('dialog');
     box.className = 'zoom lightbox';
     box.setAttribute('aria-label', 'Enlarged image');
@@ -164,12 +151,8 @@
     image.decoding = 'async';
     box.append(close, image);
     document.getElementById('content').append(box);
-    for (const dialog of [box, map].filter(Boolean)) {
-      dialog.querySelector('.zoom-close')?.addEventListener('click', () => dialog.close(), { signal });
-      dialog.addEventListener('click', event => {
-        if (event.target === dialog || event.target.classList.contains('zoom-scroll')) dialog.close();
-      }, { signal });
-    }
+    close.addEventListener('click', () => box.close(), { signal });
+    box.addEventListener('click', event => { if (event.target === box) box.close(); }, { signal });
     document.querySelectorAll('#content img').forEach(img => {
       if (img.closest('a, button, .zoom')) return;
       img.tabIndex = 0;
@@ -202,7 +185,96 @@
     return scripts.get(src);
   }
 
+  function initMaps(signal) {
+    const maps = [...document.querySelectorAll('[data-highway-map]')];
+    if (!maps.length) return;
+    let loading;
+    function loadMap() {
+      loading ??= Promise.all([
+        fetch('/api/highway-map', { cache: 'no-cache', signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]) }),
+        loadScript('/js/highway-map.js?v=24')
+      ]).then(([response]) => {
+        if (!response.ok) throw new Error('Highway map unavailable');
+        return response.json();
+      }).catch(error => { loading = undefined; throw error; });
+      return loading;
+    }
+
+    const observer = observe(maps, async entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      try {
+        const data = await loadMap();
+        if (!signal.aborted) maps.forEach(canvas => window.thmHighwayMap(canvas, data, signal));
+      } catch {
+        if (!signal.aborted) document.querySelector('.atlas-status')?.replaceChildren('Could not load the survey. Reload to try again.');
+      }
+    }, { rootMargin: '160px' });
+
+    const preview = maps[0].closest('a[href="/map"]');
+    if (!preview) return;
+    let dialog;
+    preview.addEventListener('click', async event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (dialog) return;
+
+      const box = document.createElement('dialog');
+      dialog = box;
+      box.className = 'atlas-dialog';
+      box.setAttribute('aria-label', 'Nether highway map');
+      const bar = document.createElement('div');
+      bar.className = 'atlas-dialog-bar';
+      const direct = document.createElement('a');
+      direct.href = preview.href;
+      direct.className = 'text-link';
+      direct.textContent = 'Open full page';
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'atlas-dialog-close';
+      close.textContent = 'Close ×';
+      const status = document.createElement('p');
+      status.setAttribute('role', 'status');
+      status.textContent = 'Loading public highways…';
+      bar.append(direct, close);
+      box.append(bar, status);
+      document.getElementById('content').append(box);
+      const lifetime = new AbortController();
+      const mapSignal = AbortSignal.any([signal, lifetime.signal]);
+      box.addEventListener('close', () => {
+        lifetime.abort();
+        box.remove();
+        if (dialog === box) dialog = undefined;
+        if (!signal.aborted) preview.focus({ preventScroll: true });
+      }, { once: true });
+      signal.addEventListener('abort', () => box.close(), { once: true, signal: lifetime.signal });
+      close.addEventListener('click', () => box.close(), { signal: mapSignal });
+      box.addEventListener('click', e => {
+        if (e.target !== box) return;
+        const bounds = box.getBoundingClientRect();
+        if (e.clientX < bounds.left || e.clientX >= bounds.right || e.clientY < bounds.top || e.clientY >= bounds.bottom) box.close();
+      }, { signal: mapSignal });
+      box.showModal();
+      close.focus();
+
+      try {
+        const [markup, data] = await Promise.all([pageHtml(preview.href), loadMap()]);
+        if (mapSignal.aborted || !box.open) return;
+        const atlas = new DOMParser().parseFromString(markup, 'text/html').querySelector('.atlas');
+        if (!atlas) throw new Error('Map layout unavailable');
+        status.replaceWith(atlas);
+        window.thmHighwayMap(atlas.querySelector('canvas'), data, mapSignal);
+      } catch {
+        if (!mapSignal.aborted && box.open) {
+          status.textContent = 'Could not load the map. Try opening the full page.';
+          if (!status.isConnected) box.querySelector('.atlas')?.replaceWith(status);
+        }
+      }
+    }, { signal });
+  }
+
   function lazyRenderers(signal) {
+    initMaps(signal);
     const skin = document.getElementById('skin-canvas');
     if (skin) {
       const observer = observe([skin], async entries => {
@@ -210,7 +282,7 @@
         observer.disconnect();
         try {
           await loadScript('/js/vendor/three-r128.min.js');
-          await loadScript('/js/skin.js?v=19');
+          await loadScript('/js/skin.js?v=24');
           if (!signal.aborted && skin.isConnected) window.thmSkin(skin, signal);
         } catch {
           if (!signal.aborted) skin.closest('.plate')?.querySelector('.skin-hint')?.replaceChildren('Skin preview unavailable');

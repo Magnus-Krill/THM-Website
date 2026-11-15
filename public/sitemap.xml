@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://highwaymen.cc/</loc></url>
   <url><loc>https://highwaymen.cc/network/</loc></url>
+  <url><loc>https://highwaymen.cc/map</loc></url>
   <url><loc>https://highwaymen.cc/players/</loc></url>
   <url><loc>https://highwaymen.cc/achievements/</loc></url>
   <url><loc>https://highwaymen.cc/about/</loc></url>
@@ -13,5 +14,4 @@
   <url><loc>https://highwaymen.cc/players/Volizray/</loc></url>
   <url><loc>https://highwaymen.cc/players/fainecio/</loc></url>
   <url><loc>https://highwaymen.cc/players/CapyKing10/</loc></url>
-  <url><loc>https://highwaymen.cc/players/MeganByte_/</loc></url>
 </urlset>

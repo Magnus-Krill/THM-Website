@@ -20,7 +20,9 @@ against its actual surface. Prefer clear labels over terminal-style metadata.
 ## Pages
 
 - `/`: clan artwork, a brief introduction, live activity and two route previews.
-- `/network/`: highway map, completion dates and the five-wide standard.
+- `/network/`: clickable map preview, completion dates and the five-wide standard.
+- `/map`: public Nether survey with road details and coordinate actions.
+  Clicking a preview opens the same map in a dialog.
 - `/players/`: one complete roster ordered by Kitbot’s configured rank hierarchy, with explicit profile availability and retired/former-owner labels.
 - `/players/<name>/`: member history, facts, portfolio and a 3D skin.
 - `/achievements/`: recorded highway and member milestones. Date historical claims.
@@ -37,7 +39,7 @@ Keep navigation and footer mounted. Replace only `main#content`, with a 140ms
 transition or an immediate swap for reduced motion. No late content reveals.
 
 Load the main hero artwork eagerly; lazy-load below-fold images, skin code and
-map metadata. Reserve image dimensions. Offscreen sections use content visibility.
+map geometry. Reserve image dimensions. Offscreen sections use content visibility.
 
 Skins rotate automatically while visible, with a pause control and pointer/arrow
 key rotation. Pause GPU work in hidden tabs and offscreen; reduced motion disables

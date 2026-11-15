@@ -4,6 +4,8 @@ process.env.NODE_ENV ||= 'production';
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { readFile, stat } = require('node:fs/promises');
+const { publicNetherMap } = require('./helpers/highway-map.cjs');
 const { spawnSync, execFile } = require('child_process');
 const { createHash } = require('crypto');
 const compression = require('compression');
@@ -12,6 +14,7 @@ const app = express();
 // Configuration constants
 const PORT = Number(process.env.PORT || 3002);
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const HIGHWAYS_FILE = path.join(__dirname, '..', 'kitbot', 'json', 'highways.jsonc');
 const STATS_FILE = path.join(PUBLIC_DIR, 'stats.json');
 const SITE_ORIGIN = new URL(process.env.SITE_ORIGIN || 'https://highwaymen.cc').origin;
 if (!/^https?:\/\//.test(SITE_ORIGIN)) throw new Error('SITE_ORIGIN must use HTTP or HTTPS');
@@ -44,7 +47,7 @@ app.use((_req, res, next) => {
 function staticHeaders(res, file) {
   if (/\.(?:css|js|woff2)$/.test(file)) {
     const version = new URL(res.req.originalUrl, SITE_ORIGIN).searchParams.get('v');
-    res.set('Cache-Control', version === '19' ? 'public, max-age=31536000, immutable' : 'public, max-age=3600');
+    res.set('Cache-Control', version === '24' ? 'public, max-age=31536000, immutable' : 'public, max-age=3600');
   } else if (/\.html$/.test(file)) {
     res.set('Cache-Control', 'public, no-cache, max-age=0, must-revalidate');
     res.set('Cloudflare-CDN-Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
@@ -166,6 +169,32 @@ app.get('/api/stats', (req, res) => {
   }
 });
 
+let highwayMap;
+app.get('/api/highway-map', async (_req, res) => {
+  try {
+    const { mtimeMs, size, ino } = await stat(HIGHWAYS_FILE);
+    const revision = `${ino}:${size}:${mtimeMs}`;
+    if (highwayMap?.revision !== revision) {
+      const { parseJsonc } = require('../kitbot/helpers/jsonFiles.cjs');
+      const source = await readFile(HIGHWAYS_FILE, 'utf8');
+      highwayMap = { revision, data: JSON.stringify(publicNetherMap(parseJsonc(source))) };
+    }
+    res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+    res.set('Cloudflare-CDN-Cache-Control', 'public, max-age=60');
+    res.type('json').send(highwayMap.data);
+  } catch {
+    res.set('Cache-Control', 'no-store');
+    res.set('Cloudflare-CDN-Cache-Control', 'no-store');
+    res.status(503).json({ error: 'Highway map unavailable' });
+  }
+});
+
+app.get('/map', (_req, res, next) => {
+  const file = path.join(PUBLIC_DIR, 'map', 'index.html');
+  staticHeaders(res, file);
+  res.sendFile(file, error => { if (error) next(error); });
+});
+
 // Cape index for THM-Addons — its CapeManager GETs this and expects
 // {"capes":[{"id","url"}]}, then saves each download as <id>.webp. Built from
 // the directory at request time, so dropping a .webp into public/cape/ is the
@@ -189,7 +218,7 @@ app.use(express.static(PUBLIC_DIR, { dotfiles: 'deny', setHeaders: staticHeaders
 app.use((_req, res) => {
   res.set('Cache-Control', 'no-store');
   res.set('Cloudflare-CDN-Cache-Control', 'no-store');
-  res.status(404).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Page not found · THM</title><link rel="stylesheet" href="/css/thm.css?v=19"><main class="wrap pf"><h1 class="h2">Page not found.</h1><p>The page may have moved.</p><a class="btn btn-signal" href="/">Go to the homepage</a></main></html>');
+  res.status(404).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Page not found · THM</title><link rel="stylesheet" href="/css/thm.css?v=24"><main class="wrap pf"><h1 class="h2">Page not found.</h1><p>The page may have moved.</p><a class="btn btn-signal" href="/">Go to the homepage</a></main></html>');
 });
 app.use((err, _req, res, _next) => {
   const status = err.status === 400 ? 400 : 500;

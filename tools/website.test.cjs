@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const app = require('../server');
+const { publicNetherMap } = require('../helpers/highway-map.cjs');
 let server, origin;
 before(async () => {
   server = app.listen(0, '127.0.0.1');
@@ -18,7 +19,7 @@ test('pages revalidate, versioned assets cache, and live data stays fresh', asyn
   assert.equal(page.status, 200);
   assert.match(page.headers.get('cache-control'), /no-cache, max-age=0/);
   assert.match(page.headers.get('cloudflare-cdn-cache-control'), /max-age=300/);
-  const css = await fetch(origin + '/css/thm.css?v=19');
+  const css = await fetch(origin + '/css/thm.css?v=24');
   assert.match(css.headers.get('cache-control'), /immutable/);
   const unversioned = await fetch(origin + '/css/thm.css');
   assert.doesNotMatch(unversioned.headers.get('cache-control'), /immutable/);
@@ -28,8 +29,116 @@ test('pages revalidate, versioned assets cache, and live data stays fresh', asyn
   assert.match(map.headers.get('cache-control'), /max-age=60,/);
 });
 
+test('highway map includes only public Nether geometry', () => {
+  const entry = (x, z, onMap) => ({ onMap, coordinates: { x, y: 120, z }, updatedBy: 'private' });
+  const map = publicNetherMap({
+    nether: {
+      N: entry(0, -500, true),
+      dugN: entry(0, -800, false),
+      E: entry(500, 0, true),
+      dugE: entry(800, 0, true),
+      W: entry(-500, 0, false),
+      dugW: entry(-800, 0, true),
+      hidden: entry(12, 34, false),
+      unlisted: entry(41, 72),
+      landmark: entry(23, 45, true),
+      ringRoads: [{ radius: 25, paved: true }, { radius: 200, paved: true, onMap: false }],
+      diamondHighways: [{ radius: 100, paved: false }]
+    },
+    overworld: { other: entry(5000, 5000, true) },
+    end: { other: entry(1000, 1000, true) }
+  });
+  assert.deepEqual(map, { axes: [['N', 0, -500], ['E', 500, 0, 800, 0]], rings: [[25, 1]], diamonds: [[100, 0]], points: [['landmark', 23, 45]] });
+});
+
+test('map opens at /map and revalidates its HTML', async () => {
+  const response = await fetch(origin + '/map', { redirect: 'manual' });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-cache/);
+  assert.match(await response.text(), /<title>Nether highway map/);
+});
+
+test('map zoom eases around the cursor and returns to idle', () => {
+  class Element extends EventTarget {
+    constructor() { super(); this.dataset = {}; this.classList = { remove() {} }; }
+    append() {}
+    add() {}
+    setAttribute() {}
+  }
+  const canvas = new Element();
+  const frame = new Element();
+  const position = new Element();
+  const select = new Element();
+  const controls = new Element();
+  const label = new Element();
+  const scope = new Element();
+  const status = new Element();
+  const detail = new Element();
+  canvas.closest = selector => selector === '.atlas-frame' ? frame : scope;
+  canvas.hasAttribute = () => true;
+  canvas.getBoundingClientRect = () => ({ left: 0, top: 0 });
+  select.closest = () => label;
+  frame.querySelector = () => position;
+  scope.querySelector = selector => ({
+    '[data-map-feature]': select, '.atlas-controls': controls, '.atlas-status': status, '.atlas-detail': detail
+  })[selector];
+
+  let paints = 0, resize, now = 0, id = 0;
+  const pending = new Map();
+  const labels = new Set();
+  const paint = {
+    fillRect(x, y) { if (x === 0 && y === 0) paints++; },
+    fillText(text) { labels.add(text); },
+    createLinearGradient() { return { addColorStop() {} }; }
+  };
+  canvas.getContext = () => new Proxy(paint, { get: (target, name) => target[name] ?? (() => {}) });
+  const window = {};
+  const document = new Element();
+  document.createElement = () => new Element();
+  const preference = { matches: false };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/highway-map.js'), 'utf8'), {
+    window, document, Option: Element, devicePixelRatio: 1, matchMedia: () => preference,
+    performance: { now: () => now },
+    ResizeObserver: class { constructor(callback) { resize = callback; } observe() {} disconnect() {} },
+    requestAnimationFrame: cb => { pending.set(++id, cb); return id; },
+    cancelAnimationFrame: id => pending.delete(id)
+  });
+  function frameAt(time) {
+    now = time;
+    const [id, draw] = pending.entries().next().value;
+    pending.delete(id);
+    draw(time);
+  }
+  function wheel() {
+    canvas.dispatchEvent(Object.assign(new Event('wheel', { cancelable: true }), { clientX: 300, clientY: 200, deltaY: -160 }));
+  }
+
+  const controller = new AbortController();
+  require('node:events').setMaxListeners(24, controller.signal);
+  window.thmHighwayMap(canvas, { axes: [['E', 30_000_000, 0]], rings: [], diamonds: [], points: [] }, controller.signal);
+  resize([{ contentRect: { width: 500, height: 500 } }]);
+  frameAt(0);
+  assert.ok(labels.has('Overworld Border (3.75M)'));
+  assert.ok(labels.has('Nether Border (30M)'));
+  wheel();
+  frameAt(1);
+  const anchor = position.textContent;
+  frameAt(80);
+  assert.equal(position.textContent, anchor);
+  assert.equal(pending.size, 1);
+  frameAt(180);
+  assert.equal(position.textContent, anchor);
+  assert.equal(paints, 4);
+  assert.equal(pending.size, 0);
+  preference.matches = true;
+  wheel();
+  frameAt(200);
+  assert.equal(pending.size, 0);
+  controller.abort();
+});
+
 test('compression negotiates encodings and keeps all Vary fields', async () => {
-  const css = await fetch(origin + '/css/thm.css?v=19', { headers: { 'accept-encoding': 'gzip' } });
+  const css = await fetch(origin + '/css/thm.css?v=24', { headers: { 'accept-encoding': 'gzip' } });
   assert.equal(css.headers.get('content-encoding'), 'gzip');
   assert.match(css.headers.get('vary'), /Accept-Encoding/);
   assert.ok((await css.text()).startsWith('@font-face'));
@@ -64,7 +173,7 @@ test('security headers permit only the intended inline boot scripts', async () =
   assert.doesNotMatch(policy.split(';').find(part => part.includes('script-src')), /unsafe-inline|unsafe-eval/);
   assert.equal(response.headers.get('x-powered-by'), null);
   const { createHash } = require('node:crypto');
-  for (const route of ['/', '/network/', '/players/', '/achievements/', '/about/', '/players/MagnusKrill/', '/players/Ryazor/', '/players/Kyr0zen/', '/players/mingailas/', '/players/xm4nn/', '/players/Volizray/', '/players/fainecio/', '/players/CapyKing10/', '/players/MeganByte_/']) {
+  for (const route of ['/', '/network/', '/players/', '/achievements/', '/about/', '/players/MagnusKrill/', '/players/Ryazor/', '/players/Kyr0zen/', '/players/mingailas/', '/players/xm4nn/', '/players/Volizray/', '/players/fainecio/', '/players/CapyKing10/']) {
     const html = await (await fetch(origin + route)).text();
     for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
       if (match[1]) assert.ok(policy.includes(createHash('sha256').update(match[1]).digest('base64')), route);
@@ -199,7 +308,7 @@ test('reduced motion and hidden tabs have no autonomous skin render loop', () =>
 });
 
 test('every internal page link and fragment resolves after splitting the homepage', async () => {
-  const routes = ['/', '/network/', '/players/', '/achievements/', '/about/', '/players/MagnusKrill/', '/players/Ryazor/', '/players/Kyr0zen/', '/players/mingailas/', '/players/xm4nn/', '/players/Volizray/', '/players/fainecio/', '/players/CapyKing10/', '/players/MeganByte_/'];
+  const routes = ['/', '/network/', '/map', '/players/', '/achievements/', '/about/', '/players/MagnusKrill/', '/players/Ryazor/', '/players/Kyr0zen/', '/players/mingailas/', '/players/xm4nn/', '/players/Volizray/', '/players/fainecio/', '/players/CapyKing10/'];
   const documents = new Map();
   for (const route of routes) {
     const response = await fetch(origin + route);
@@ -209,7 +318,7 @@ test('every internal page link and fragment resolves after splitting the homepag
   for (const [route, markup] of documents) {
     for (const match of markup.matchAll(/href="([^"]+)"/g)) {
       const url = new URL(match[1], origin + route);
-      if (url.origin !== origin || !url.pathname.endsWith('/')) continue;
+      if (url.origin !== origin || (url.pathname !== '/map' && !url.pathname.endsWith('/'))) continue;
       assert.ok(documents.has(url.pathname), `Missing page: ${route} -> ${url.pathname}`);
       if (url.hash) assert.ok(documents.get(url.pathname).includes(`id="${url.hash.slice(1)}"`), `Missing fragment: ${route} -> ${url.pathname}${url.hash}`);
     }
