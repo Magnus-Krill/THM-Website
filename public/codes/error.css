@@ -1,0 +1,112 @@
+/* THM error pages — compatible with the site's style-src 'self' CSP. */
+:root { color-scheme: dark; }
+html, body { margin: 0; min-height: 100%; background: #000 !important; color: #f6f6f6 !important; }
+body.thm-error-page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: #000 !important;
+  color: #f6f6f6 !important;
+}
+.thm-error-page .error-main {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 64px 24px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.thm-error-page .error-content { max-width: 680px; width: 100%; margin: 0 auto; }
+.thm-error-page .error-eyebrow {
+  margin: 0 0 20px;
+  color: #a3a3a3;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  line-height: 1.7;
+  text-transform: uppercase;
+}
+.thm-error-page .error-code {
+  margin: 0;
+  font-size: clamp(6.5rem, 22vw, 12rem);
+  font-weight: 900;
+  letter-spacing: -.085em;
+  line-height: .95;
+  color: #fff;
+  text-wrap: balance;
+}
+.thm-error-page .error-title {
+  margin: 24px 0 14px;
+  color: #fff;
+  font-size: clamp(1.8rem, 5vw, 3.3rem);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: -.04em;
+  text-wrap: balance;
+}
+.thm-error-page .error-description {
+  margin: 0 auto;
+  max-width: 540px;
+  color: #b7b7b7;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+.thm-error-page .error-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+.thm-error-page .error-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 12px 21px;
+  border: 1px solid #525252;
+  border-radius: 7px;
+  background: #111;
+  color: #f7f7f7;
+  font: inherit;
+  font-size: .91rem;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.thm-error-page .error-actions .btn:hover,
+.thm-error-page .error-actions .btn:focus-visible { background: #222; border-color: #929292; }
+.thm-error-page .error-actions .btn.btn-signal {
+  border-color: #ab3500;
+  background: #ab3500;
+  color: #fff;
+}
+.thm-error-page .error-actions .btn.btn-signal:hover,
+.thm-error-page .error-actions .btn.btn-signal:focus-visible {
+  background: #c8490a;
+  border-color: #c8490a;
+}
+.thm-error-page .error-footer {
+  margin: 32px 0 0;
+  color: #777;
+  font-size: .79rem;
+  letter-spacing: .015em;
+}
+@media (max-width: 480px) {
+  .thm-error-page .error-main { padding: 48px 20px; }
+  .thm-error-page .error-title { margin-top: 20px; }
+  .thm-error-page .error-actions { flex-direction: column; }
+  .thm-error-page .error-actions .btn { width: min(100%, 280px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thm-error-page .error-actions .btn { transition: none; }
+}

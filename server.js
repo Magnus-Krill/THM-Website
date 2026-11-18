@@ -222,16 +222,31 @@ app.get('/cape/index', (_req, res) => {
 });
 
 app.use(express.static(PUBLIC_DIR, { dotfiles: 'deny', setHeaders: staticHeaders }));
+function sendErrorPage(res, status) {
+  res.set('Cache-Control', 'no-store');
+  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
+
+  const file = path.join(PUBLIC_DIR, 'codes', `${status}.html`);
+
+  res.status(status).sendFile(file, (err) => {
+    if (err && !res.headersSent) {
+      res.status(status).type('text').send(`${status} Error`);
+    }
+  });
+}
+
 app.use((_req, res) => {
-  res.set('Cache-Control', 'no-store');
-  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
-  res.status(404).type('html').send('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Page not found · THM</title><link rel="stylesheet" href="/css/thm.css?v=31"><main class="wrap pf"><h1 class="h2">Page not found.</h1><p>The page may have moved.</p><a class="btn btn-signal" href="/">Go to the homepage</a></main></html>');
+  sendErrorPage(res, 404);
 });
-app.use((err, _req, res, _next) => {
-  const status = err.status === 400 ? 400 : 500;
-  res.set('Cache-Control', 'no-store');
-  res.set('Cloudflare-CDN-Cache-Control', 'no-store');
-  res.status(status).type('text').send(status === 400 ? 'Bad request' : 'Website temporarily unavailable');
+
+app.use((err, _req, res, next) => {
+  if (res.headersSent) return next(err);
+
+  const status = err.status >= 400 && err.status <= 599
+    ? err.status
+    : 500;
+
+  sendErrorPage(res, status);
 });
 
 // Bind retry. Do not remove: 3002 comes back EADDRINUSE for a few seconds after
